@@ -19,34 +19,41 @@ function Login() {
         });
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    
+const handleSubmit = async (e) => {
+    e.preventDefault();
 
-        setError("");
+    setError("");
 
-        try {
-            const response = await API.post("/auth/login", formData);
+    console.log("Login form data:", formData);
 
-            // Store JWT token
-            localStorage.setItem("token", response.data.token);
+    try {
+        const response = await API.post("/auth/login", formData);
 
-            // Store user details if provided by backend
-            if (response.data.user) {
-                localStorage.setItem(
-                    "user",
-                    JSON.stringify(response.data.user)
-                );
-            }
+        console.log("Login API response:", response.data);
 
-            navigate("/dashboard");
+        localStorage.setItem("token", response.data.token);
 
-        } catch (err) {
-            setError(
-                err.response?.data?.message ||
-                "Login failed. Please check your credentials."
+        if (response.data.user) {
+            localStorage.setItem(
+                "user",
+                JSON.stringify(response.data.user)
             );
         }
-    };
+
+        navigate("/dashboard");
+
+    } catch (err) {
+        console.log("Login error status:", err.response?.status);
+        console.log("Login error response:", err.response?.data);
+
+        setError(
+            err.response?.data?.message ||
+            "Login failed. Please check your credentials."
+        );
+    }
+};
+
 
     return (
         <div className="auth-container">
