@@ -8,7 +8,10 @@ const {
     addReading,
     getReadings,
     updateReading,
-    deleteReading
+    deleteReading,
+    getDailyReport,
+    getMTDReport,
+    getPreviousMonthReport
 } = require("../controllers/readingsController");
 
 // Create reading
@@ -22,5 +25,11 @@ router.put("/:id", protect, updateReading);
 
 // Delete reading
 router.delete("/:id", protect, deleteReading);
+
+router.get("/daily-report", protect, getDailyReport);
+
+router.get("/mtd-report", protect, getMTDReport);
+
+router.get("/previous-month-report", protect, getPreviousMonthReport);
 
 module.exports = router;

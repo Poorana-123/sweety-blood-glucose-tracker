@@ -172,11 +172,174 @@ const deleteReading = async (req, res) => {
     }
 };
 
+
+// Get daily glucose report
+const getDailyReport = async (req, res) => {
+    try {
+        const { date } = req.query;
+
+        if (!date) {
+            return res.status(400).json({
+                message: "Date is required. Use YYYY-MM-DD format"
+            });
+        }
+
+        const result = await pool.query(
+            `SELECT
+                COUNT(*) AS total_readings,
+                ROUND(AVG(glucose_value)) AS average_glucose,
+                MIN(glucose_value) AS minimum_glucose,
+                MAX(glucose_value) AS maximum_glucose
+             FROM readings
+             WHERE user_id = $1
+             AND reading_date = $2`,
+            [req.user.id, date]
+        );
+
+        res.status(200).json({
+            message: "Daily report fetched successfully",
+            date: date,
+            report: result.rows[0]
+        });
+
+    } catch (error) {
+        console.error("Daily report error:", error);
+
+        res.status(500).json({
+            message: "Server error while generating daily report"
+        });
+    }
+};
+
+
+// Get Month-to-Date glucose report
+const getMTDReport = async (req, res) => {
+    try {
+        // Get today's date
+        const today = new Date();
+
+        // First day of the current month
+        const startDate = new Date(
+            today.getFullYear(),
+            today.getMonth(),
+            1
+        );
+
+        // Format dates as YYYY-MM-DD
+        const formatDate = (date) => {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, "0");
+            const day = String(date.getDate()).padStart(2, "0");
+
+            return `${year}-${month}-${day}`;
+        };
+
+        const fromDate = formatDate(startDate);
+        const toDate = formatDate(today);
+
+        // Fetch MTD glucose statistics
+        const result = await pool.query(
+            `SELECT
+                COUNT(*) AS total_readings,
+                ROUND(AVG(glucose_value)) AS average_glucose,
+                MIN(glucose_value) AS minimum_glucose,
+                MAX(glucose_value) AS maximum_glucose
+             FROM readings
+             WHERE user_id = $1
+             AND reading_date BETWEEN $2 AND $3`,
+            [req.user.id, fromDate, toDate]
+        );
+
+        res.status(200).json({
+            message: "Month-to-Date report fetched successfully",
+            period: {
+                from: fromDate,
+                to: toDate
+            },
+            report: result.rows[0]
+        });
+
+    } catch (error) {
+        console.error("MTD report error:", error);
+
+        res.status(500).json({
+            message: "Server error while generating MTD report"
+        });
+    }
+};
+
+
+// Get Previous Month glucose report
+const getPreviousMonthReport = async (req, res) => {
+    try {
+        const today = new Date();
+
+        // First day of the previous month
+        const startDate = new Date(
+            today.getFullYear(),
+            today.getMonth() - 1,
+            1
+        );
+
+        // Last day of the previous month
+        const endDate = new Date(
+            today.getFullYear(),
+            today.getMonth(),
+            0
+        );
+
+        // Format date as YYYY-MM-DD
+        const formatDate = (date) => {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, "0");
+            const day = String(date.getDate()).padStart(2, "0");
+
+            return `${year}-${month}-${day}`;
+        };
+
+        const fromDate = formatDate(startDate);
+        const toDate = formatDate(endDate);
+
+        // Get previous month statistics
+        const result = await pool.query(
+            `SELECT
+                COUNT(*) AS total_readings,
+                ROUND(AVG(glucose_value)) AS average_glucose,
+                MIN(glucose_value) AS minimum_glucose,
+                MAX(glucose_value) AS maximum_glucose
+             FROM readings
+             WHERE user_id = $1
+             AND reading_date BETWEEN $2 AND $3`,
+            [req.user.id, fromDate, toDate]
+        );
+
+        res.status(200).json({
+            message: "Previous Month report fetched successfully",
+            period: {
+                from: fromDate,
+                to: toDate
+            },
+            report: result.rows[0]
+        });
+
+    } catch (error) {
+        console.error("Previous Month report error:", error);
+
+        res.status(500).json({
+            message: "Server error while generating Previous Month report"
+        });
+    }
+};
+
+
 module.exports = {
     addReading,
     getReadings,
     updateReading,
-    deleteReading
+    deleteReading,
+    getDailyReport,
+    getMTDReport,
+    getPreviousMonthReport
 };
 
 
