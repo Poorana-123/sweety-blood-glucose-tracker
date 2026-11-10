@@ -1,25 +1,26 @@
 const { pool } = require("../config/db");
-
+const { validateReading } = require("../utils/readingValidation");
 // Add a new glucose reading
+
+
 const addReading = async (req, res) => {
     try {
         const { reading_date, time_slot, glucose_value } = req.body;
 
-        // Validate required fields
-        if (!reading_date || !time_slot || !glucose_value) {
+        // Validate input
+        const validationError = validateReading(
+            reading_date,
+            time_slot,
+            glucose_value
+        );
+
+        if (validationError) {
             return res.status(400).json({
-                message: "All fields are required"
+                message: validationError
             });
         }
 
-        // Validate glucose value
-        if (glucose_value < 40 || glucose_value > 600) {
-            return res.status(400).json({
-                message: "Glucose value must be between 40 and 600"
-            });
-        }
-
-        // Insert reading into PostgreSQL
+        // Insert reading
         const result = await pool.query(
             `INSERT INTO readings
             (user_id, reading_date, time_slot, glucose_value)
@@ -29,7 +30,7 @@ const addReading = async (req, res) => {
                 req.user.id,
                 reading_date,
                 time_slot,
-                glucose_value
+                Number(glucose_value)
             ]
         );
 
@@ -40,6 +41,13 @@ const addReading = async (req, res) => {
 
     } catch (error) {
         console.error("Add reading error:", error);
+
+        // Duplicate time slot
+        if (error.code === "23505") {
+            return res.status(409).json({
+                message: "A reading already exists for this date and time slot"
+            });
+        }
 
         res.status(500).json({
             message: "Server error while adding reading"
@@ -74,25 +82,23 @@ const getReadings = async (req, res) => {
 };
 
 
+
 // Update glucose reading
 const updateReading = async (req, res) => {
     try {
         const { id } = req.params;
         const { reading_date, time_slot, glucose_value } = req.body;
 
-        if (!reading_date || !time_slot || glucose_value === undefined) {
-            return res.status(400).json({
-                message: "All fields are required"
-            });
-        }
+        // Reusable validation
+        const validationError = validateReading(
+            reading_date,
+            time_slot,
+            glucose_value
+        );
 
-        if (
-            !Number.isInteger(Number(glucose_value)) ||
-            Number(glucose_value) < 40 ||
-            Number(glucose_value) > 600
-        ) {
+        if (validationError) {
             return res.status(400).json({
-                message: "Glucose value must be an integer between 40 and 600"
+                message: validationError
             });
         }
 
@@ -106,7 +112,7 @@ const updateReading = async (req, res) => {
             [
                 reading_date,
                 time_slot,
-                glucose_value,
+                Number(glucose_value),
                 id,
                 req.user.id
             ]
@@ -137,6 +143,7 @@ const updateReading = async (req, res) => {
         });
     }
 };
+
 
 
 // Delete glucose reading
