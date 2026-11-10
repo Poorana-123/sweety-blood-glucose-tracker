@@ -15,6 +15,30 @@ function Dashboard() {
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const [success, setSuccess] = useState("");
+
+    // CRUD form states
+    const [showForm, setShowForm] = useState(false);
+    const [editingId, setEditingId] = useState(null);
+    const [saving, setSaving] = useState(false);
+
+    const getLocalDate = () => {
+        const today = new Date();
+
+        return [
+            today.getFullYear(),
+            String(today.getMonth() + 1).padStart(2, "0"),
+            String(today.getDate()).padStart(2, "0")
+        ].join("-");
+    };
+
+    const initialFormData = {
+        reading_date: getLocalDate(),
+        time_slot: "Morning (fasting)",
+        glucose_value: ""
+    };
+
+    const [formData, setFormData] = useState(initialFormData);
 
     // Load user and dashboard data
     useEffect(() => {
@@ -31,22 +55,17 @@ function Dashboard() {
         fetchDashboardData();
     }, []);
 
-    // Fetch dashboard data from backend
-    const fetchDashboardData = async () => {
+    // Fetch all dashboard data
+    const fetchDashboardData = async (showLoader = true) => {
         try {
-            setLoading(true);
+            if (showLoader) {
+                setLoading(true);
+            }
+
             setError("");
 
-            // Get today's local date
-            const today = new Date();
+            const localDate = getLocalDate();
 
-            const localDate = [
-                today.getFullYear(),
-                String(today.getMonth() + 1).padStart(2, "0"),
-                String(today.getDate()).padStart(2, "0")
-            ].join("-");
-
-            // Fetch all dashboard APIs
             const [
                 readingsResponse,
                 dailyResponse,
@@ -59,13 +78,11 @@ function Dashboard() {
                 API.get("/readings/previous-month-report")
             ]);
 
-            // Store readings
             setReadings(
                 readingsResponse.data.readings ||
                 readingsResponse.data
             );
 
-            // Store reports
             setDailyReport(dailyResponse.data);
             setMtdReport(mtdResponse.data);
             setPreviousMonthReport(previousMonthResponse.data);
@@ -88,7 +105,9 @@ function Dashboard() {
                 );
             }
         } finally {
-            setLoading(false);
+            if (showLoader) {
+                setLoading(false);
+            }
         }
     };
 
@@ -111,6 +130,7 @@ function Dashboard() {
     const getPreviousMonthName = () => {
         const date = new Date();
 
+        date.setDate(1);
         date.setMonth(date.getMonth() - 1);
 
         return date.toLocaleString("en-IN", {
@@ -118,7 +138,130 @@ function Dashboard() {
         });
     };
 
-    // Report card component
+    // Open Add Reading form
+    const handleAddReading = () => {
+        setEditingId(null);
+        setFormData({
+            ...initialFormData,
+            reading_date: getLocalDate()
+        });
+
+        setError("");
+        setSuccess("");
+        setShowForm(true);
+    };
+
+    // Open Edit Reading form
+    const handleEditReading = (reading) => {
+        setEditingId(reading.id);
+
+        setFormData({
+            reading_date: String(reading.reading_date).slice(0, 10),
+            time_slot: reading.time_slot,
+            glucose_value: reading.glucose_value
+        });
+
+        setError("");
+        setSuccess("");
+        setShowForm(true);
+    };
+
+    // Handle form input changes
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+
+        setFormData((prev) => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    // CREATE and UPDATE reading
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        try {
+            setSaving(true);
+            setError("");
+            setSuccess("");
+
+            const payload = {
+                reading_date: formData.reading_date,
+                time_slot: formData.time_slot,
+                glucose_value: Number(formData.glucose_value)
+            };
+
+            if (editingId) {
+                // UPDATE - PUT
+                await API.put(`/readings/${editingId}`, payload);
+
+                setSuccess("Reading updated successfully!");
+            } else {
+                // CREATE - POST
+                await API.post("/readings", payload);
+
+                setSuccess("Reading added successfully!");
+            }
+
+            setShowForm(false);
+            setEditingId(null);
+            setFormData(initialFormData);
+
+            // Refresh readings and reports
+            await fetchDashboardData(false);
+
+        } catch (err) {
+            console.error("Save reading error:", err);
+
+            setError(
+                err.response?.data?.message ||
+                "Unable to save reading. Please try again."
+            );
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    // DELETE reading
+    const handleDeleteReading = async (id) => {
+        const confirmDelete = window.confirm(
+            "Are you sure you want to delete this glucose reading?"
+        );
+
+        if (!confirmDelete) {
+            return;
+        }
+
+        try {
+            setError("");
+            setSuccess("");
+
+            await API.delete(`/readings/${id}`);
+
+            setSuccess("Reading deleted successfully!");
+
+            // Refresh readings and reports
+            await fetchDashboardData(false);
+
+        } catch (err) {
+            console.error("Delete reading error:", err);
+
+            setError(
+                err.response?.data?.message ||
+                "Unable to delete reading."
+            );
+        }
+    };
+
+    // Close form
+    const handleCancel = () => {
+        setShowForm(false);
+        setEditingId(null);
+        setFormData(initialFormData);
+        setError("");
+    };
+
+    // Report Card component
     const ReportCard = ({ title, value, unit = "" }) => {
         return (
             <div className="report-card">
@@ -188,12 +331,27 @@ function Dashboard() {
 
                     <button
                         className="add-reading-button"
-                        onClick={() => navigate("/readings")}
+                        onClick={handleAddReading}
                     >
                         + Add Reading
                     </button>
 
                 </section>
+
+                {/* Success Message */}
+                {success && (
+                    <div
+                        style={{
+                            background: "#e6f9ef",
+                            color: "#15803d",
+                            padding: "12px 16px",
+                            borderRadius: "8px",
+                            marginBottom: "20px"
+                        }}
+                    >
+                        {success}
+                    </div>
+                )}
 
                 {/* Error Message */}
                 {error && (
@@ -205,9 +363,7 @@ function Dashboard() {
                 {/* Today's Report */}
                 <section className="report-section">
 
-                    <h2>
-                        Today's Report
-                    </h2>
+                    <h2>Today's Report</h2>
 
                     <div className="report-cards">
 
@@ -334,7 +490,7 @@ function Dashboard() {
 
                 </section>
 
-                {/* Recent Readings Table */}
+                {/* Readings Table */}
                 <section className="readings-section">
 
                     <div className="readings-heading">
@@ -342,12 +498,6 @@ function Dashboard() {
                         <h2>
                             Recent Glucose Readings
                         </h2>
-
-                        <button
-                            onClick={() => navigate("/readings")}
-                        >
-                            View All
-                        </button>
 
                     </div>
 
@@ -360,6 +510,7 @@ function Dashboard() {
                                     <th>Date</th>
                                     <th>Time Slot</th>
                                     <th>Glucose Value</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
 
@@ -385,6 +536,43 @@ function Dashboard() {
                                                 {reading.glucose_value} mg/dL
                                             </td>
 
+                                            <td>
+
+                                                <button
+                                                    onClick={() =>
+                                                        handleEditReading(reading)
+                                                    }
+                                                    style={{
+                                                        background: "#e0f2fe",
+                                                        color: "#0369a1",
+                                                        border: "none",
+                                                        padding: "7px 12px",
+                                                        borderRadius: "6px",
+                                                        cursor: "pointer",
+                                                        marginRight: "8px"
+                                                    }}
+                                                >
+                                                    Edit
+                                                </button>
+
+                                                <button
+                                                    onClick={() =>
+                                                        handleDeleteReading(reading.id)
+                                                    }
+                                                    style={{
+                                                        background: "#fee2e2",
+                                                        color: "#b91c1c",
+                                                        border: "none",
+                                                        padding: "7px 12px",
+                                                        borderRadius: "6px",
+                                                        cursor: "pointer"
+                                                    }}
+                                                >
+                                                    Delete
+                                                </button>
+
+                                            </td>
+
                                         </tr>
 
                                     ))
@@ -392,7 +580,7 @@ function Dashboard() {
                                 ) : (
 
                                     <tr>
-                                        <td colSpan="3">
+                                        <td colSpan="4">
                                             No glucose readings found.
                                         </td>
                                     </tr>
@@ -408,6 +596,225 @@ function Dashboard() {
                 </section>
 
             </main>
+
+            {/* Add / Edit Reading Modal */}
+            {showForm && (
+
+                <div
+                    style={{
+                        position: "fixed",
+                        inset: 0,
+                        background: "rgba(15, 23, 42, 0.55)",
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        zIndex: 2000,
+                        padding: "20px"
+                    }}
+                >
+
+                    <div
+                        style={{
+                            background: "#ffffff",
+                            width: "100%",
+                            maxWidth: "450px",
+                            borderRadius: "16px",
+                            padding: "28px",
+                            boxShadow: "0 20px 60px rgba(0,0,0,0.15)"
+                        }}
+                    >
+
+                        <h2 style={{ marginBottom: "8px" }}>
+                            {editingId
+                                ? "Edit Glucose Reading"
+                                : "Add Glucose Reading"}
+                        </h2>
+
+                        <p
+                            style={{
+                                color: "#64748b",
+                                marginBottom: "24px"
+                            }}
+                        >
+                            Enter your glucose reading details.
+                        </p>
+
+                        <form onSubmit={handleSubmit}>
+
+                            {/* Reading Date */}
+                            <div style={{ marginBottom: "18px" }}>
+
+                                <label
+                                    htmlFor="reading_date"
+                                    style={{
+                                        display: "block",
+                                        marginBottom: "8px",
+                                        fontWeight: "600"
+                                    }}
+                                >
+                                    Reading Date
+                                </label>
+
+                                <input
+                                    type="date"
+                                    id="reading_date"
+                                    name="reading_date"
+                                    value={formData.reading_date}
+                                    onChange={handleInputChange}
+                                    required
+                                    max={getLocalDate()}
+                                    style={{
+                                        width: "100%",
+                                        padding: "12px",
+                                        border: "1px solid #cbd5e1",
+                                        borderRadius: "8px",
+                                        boxSizing: "border-box"
+                                    }}
+                                />
+
+                            </div>
+
+                            {/* Time Slot */}
+                            <div style={{ marginBottom: "18px" }}>
+
+                                <label
+                                    htmlFor="time_slot"
+                                    style={{
+                                        display: "block",
+                                        marginBottom: "8px",
+                                        fontWeight: "600"
+                                    }}
+                                >
+                                    Time Slot
+                                </label>
+
+                                <select
+                                    id="time_slot"
+                                    name="time_slot"
+                                    value={formData.time_slot}
+                                    onChange={handleInputChange}
+                                    required
+                                    style={{
+                                        width: "100%",
+                                        padding: "12px",
+                                        border: "1px solid #cbd5e1",
+                                        borderRadius: "8px",
+                                        boxSizing: "border-box"
+                                    }}
+                                >
+
+                                    <option value="Morning (fasting)">
+                                        Morning (fasting)
+                                    </option>
+
+                                    <option value="After breakfast">
+                                        After breakfast
+                                    </option>
+
+                                    <option value="After lunch">
+                                        After lunch
+                                    </option>
+
+                                    <option value="After dinner">
+                                        After dinner
+                                    </option>
+
+                                </select>
+
+                            </div>
+
+                            {/* Glucose Value */}
+                            <div style={{ marginBottom: "24px" }}>
+
+                                <label
+                                    htmlFor="glucose_value"
+                                    style={{
+                                        display: "block",
+                                        marginBottom: "8px",
+                                        fontWeight: "600"
+                                    }}
+                                >
+                                    Glucose Value (mg/dL)
+                                </label>
+
+                                <input
+                                    type="number"
+                                    id="glucose_value"
+                                    name="glucose_value"
+                                    value={formData.glucose_value}
+                                    onChange={handleInputChange}
+                                    required
+                                    min="40"
+                                    max="600"
+                                    step="1"
+                                    placeholder="Enter glucose value"
+                                    style={{
+                                        width: "100%",
+                                        padding: "12px",
+                                        border: "1px solid #cbd5e1",
+                                        borderRadius: "8px",
+                                        boxSizing: "border-box"
+                                    }}
+                                />
+
+                            </div>
+
+                            {/* Form Buttons */}
+                            <div
+                                style={{
+                                    display: "flex",
+                                    gap: "12px"
+                                }}
+                            >
+
+                                <button
+                                    type="submit"
+                                    disabled={saving}
+                                    style={{
+                                        flex: 1,
+                                        background: "#0f766e",
+                                        color: "#ffffff",
+                                        padding: "12px",
+                                        border: "none",
+                                        borderRadius: "8px",
+                                        cursor: saving ? "not-allowed" : "pointer",
+                                        fontWeight: "600"
+                                    }}
+                                >
+                                    {saving
+                                        ? "Saving..."
+                                        : editingId
+                                            ? "Update Reading"
+                                            : "Save Reading"}
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={handleCancel}
+                                    disabled={saving}
+                                    style={{
+                                        flex: 1,
+                                        background: "#f1f5f9",
+                                        color: "#334155",
+                                        padding: "12px",
+                                        border: "none",
+                                        borderRadius: "8px",
+                                        cursor: "pointer",
+                                        fontWeight: "600"
+                                    }}
+                                >
+                                    Cancel
+                                </button>
+
+                            </div>
+
+                        </form>
+
+                    </div>
+
+                </div>
+
+            )}
 
         </div>
     );
