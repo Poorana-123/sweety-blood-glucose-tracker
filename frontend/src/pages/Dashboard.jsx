@@ -22,6 +22,16 @@ function Dashboard() {
     const [editingId, setEditingId] = useState(null);
     const [saving, setSaving] = useState(false);
 
+    // Date filter
+const [selectedDate, setSelectedDate] = useState("");
+
+// Pagination
+const [currentPage, setCurrentPage] = useState(1);
+
+const readingsPerPage = 5;
+
+
+
     const getLocalDate = () => {
         const today = new Date();
 
@@ -139,17 +149,19 @@ function Dashboard() {
     };
 
     // Open Add Reading form
-    const handleAddReading = () => {
-        setEditingId(null);
-        setFormData({
-            ...initialFormData,
-            reading_date: getLocalDate()
-        });
+    const handleAddReading = (timeSlot = "Morning (fasting)") => {
+    setEditingId(null);
 
-        setError("");
-        setSuccess("");
-        setShowForm(true);
-    };
+    setFormData({
+        ...initialFormData,
+        reading_date: getLocalDate(),
+        time_slot: timeSlot
+    });
+
+    setError("");
+    setSuccess("");
+    setShowForm(true);
+};
 
     // Open Edit Reading form
     const handleEditReading = (reading) => {
@@ -253,6 +265,114 @@ function Dashboard() {
         }
     };
 
+    // Convert reading date to YYYY-MM-DD
+const formatReadingDate = (dateValue) => {
+    if (!dateValue) return "";
+
+    return String(dateValue).slice(0, 10);
+};
+
+// Filter readings based on selected date
+const filteredReadings = readings.filter((reading) => {
+    if (!selectedDate) {
+        return true;
+    }
+
+    return formatReadingDate(reading.reading_date) === selectedDate;
+});
+
+// Total pages
+const totalPages = Math.max(
+    1,
+    Math.ceil(filteredReadings.length / readingsPerPage)
+);
+
+// Current page readings
+const indexOfLastReading = currentPage * readingsPerPage;
+
+const indexOfFirstReading =
+    indexOfLastReading - readingsPerPage;
+
+const paginatedReadings = filteredReadings.slice(
+    indexOfFirstReading,
+    indexOfLastReading
+);
+
+// Previous page
+const handlePreviousPage = () => {
+    setCurrentPage((prev) => Math.max(prev - 1, 1));
+};
+
+// Next page
+const handleNextPage = () => {
+    setCurrentPage((prev) =>
+        Math.min(prev + 1, totalPages)
+    );
+};
+
+// Date filter change
+const handleDateFilter = (date) => {
+    setSelectedDate(date);
+    setCurrentPage(1);
+};
+
+// Clear date filter
+const handleClearDateFilter = () => {
+    setSelectedDate("");
+    setCurrentPage(1);
+};
+
+    const timeSlots = [
+    "Morning (fasting)",
+    "After breakfast",
+    "After lunch",
+    "After dinner"
+];
+
+// Get today's date in local YYYY-MM-DD format
+const getTodayDate = () => {
+    const today = new Date();
+
+    return `${today.getFullYear()}-${String(
+        today.getMonth() + 1
+    ).padStart(2, "0")}-${String(
+        today.getDate()
+    ).padStart(2, "0")}`;
+};
+
+// Normalize API date to YYYY-MM-DD
+const normalizeDate = (dateValue) => {
+    const dateString = String(dateValue);
+
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+        return dateString;
+    }
+
+    // Handles timestamps such as 2026-11-09T18:30:00.000Z
+    const date = new Date(dateString);
+
+    return `${date.getFullYear()}-${String(
+        date.getMonth() + 1
+    ).padStart(2, "0")}-${String(
+        date.getDate()
+    ).padStart(2, "0")}`;
+};
+
+// Find today's readings
+const todayReadings = readings.filter(
+    (reading) =>
+        normalizeDate(reading.reading_date) === getTodayDate()
+);
+
+// Calculate completion
+const completedSlots = timeSlots.filter((slot) =>
+    todayReadings.some(
+        (reading) => reading.time_slot === slot
+    )
+).length;
+
+const progressPercentage = (completedSlots / 4) * 100;
+
     // Close form
     const handleCancel = () => {
         setShowForm(false);
@@ -337,6 +457,173 @@ function Dashboard() {
                     </button>
 
                 </section>
+
+                {/* Today's Glucose Tracking */}
+<section className="today-tracking-section">
+
+    <div className="tracking-heading">
+        <div>
+            <span className="tracking-label">
+                DAILY MONITORING
+            </span>
+
+            <h2>Today's Glucose Tracking</h2>
+
+            <p>
+                Keep track of your four daily glucose sessions.
+            </p>
+        </div>
+
+        <div className="tracking-progress">
+            <span className="progress-count">
+                {completedSlots}/4
+            </span>
+
+            <span className="progress-text">
+                Sessions Completed
+            </span>
+        </div>
+    </div>
+
+    {/* Progress Bar */}
+    <div className="tracking-progress-bar">
+        <div
+            className="tracking-progress-fill"
+            style={{
+                width: `${progressPercentage}%`
+            }}
+        />
+    </div>
+
+    {/* Session Cards */}
+    <div className="session-cards">
+
+        {timeSlots.map((slot, index) => {
+
+            const reading = todayReadings.find(
+                (item) => item.time_slot === slot
+            );
+
+            const isCompleted = Boolean(reading);
+
+            return (
+                <div
+                    key={slot}
+                    className={`session-card ${
+                        isCompleted
+                            ? "session-completed"
+                            : "session-pending"
+                    }`}
+                >
+
+                    <div className="session-card-top">
+
+                        <div className="session-icon">
+                            {["☀️", "🍳", "🌤️", "🌙"][index]}
+                        </div>
+
+                        <span
+                            className={`session-status ${
+                                isCompleted
+                                    ? "status-completed"
+                                    : "status-pending"
+                            }`}
+                        >
+                            {isCompleted
+                                ? "✓ Completed"
+                                : "● Pending"}
+                        </span>
+
+                    </div>
+
+                    <div className="session-card-content">
+
+                        <span className="session-number">
+                            SESSION 0{index + 1}
+                        </span>
+
+                        <h3>{slot}</h3>
+
+                        {isCompleted ? (
+
+                            <div className="session-reading">
+
+                                <h2>
+                                    {reading.glucose_value}
+                                    <span> mg/dL</span>
+                                </h2>
+
+                                <p>
+                                    Reading recorded successfully
+                                </p>
+
+                            </div>
+
+                        ) : (
+
+                            <div className="session-reading pending-reading">
+
+                                <h2>--</h2>
+
+                                <p>
+                                    No reading recorded yet
+                                </p>
+
+                            </div>
+
+                        )}
+
+                    </div>
+
+                    <div className="session-card-actions">
+
+                        {isCompleted ? (
+
+                            <>
+
+                                <button
+                                    className="session-edit-button"
+                                    onClick={() =>
+                                        handleEditReading(reading)
+                                    }
+                                >
+                                    ✏️ Edit Reading
+                                </button>
+
+                                <button
+                                    className="session-delete-button"
+                                    onClick={() =>
+                                        handleDeleteReading(reading.id)
+                                    }
+                                >
+                                    Delete
+                                </button>
+
+                            </>
+
+                        ) : (
+
+                            <button
+                                className="session-add-button"
+                                onClick={() =>
+                                    handleAddReading(slot)
+                                }
+                            >
+                                + Add Reading
+                            </button>
+
+                        )}
+
+                    </div>
+
+                </div>
+            );
+
+        })}
+
+    </div>
+
+</section>
 
                 {/* Success Message */}
                 {success && (
@@ -490,110 +777,188 @@ function Dashboard() {
 
                 </section>
 
-                {/* Readings Table */}
-                <section className="readings-section">
+                {/* Readings History */}
+<section className="readings-history">
 
-                    <div className="readings-heading">
+    <div className="readings-header">
 
-                        <h2>
-                            Recent Glucose Readings
-                        </h2>
+        <div>
+            <span className="history-label">
+                GLUCOSE RECORDS
+            </span>
 
-                    </div>
+            <h2>Reading History</h2>
 
-                    <div className="table-wrapper">
+            <p>
+                View and manage your glucose readings.
+            </p>
+        </div>
 
-                        <table>
+        {/* Date Filter */}
+        <div className="date-filter">
 
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Time Slot</th>
-                                    <th>Glucose Value</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
+            <label htmlFor="reading-date">
+                Filter by Date
+            </label>
 
-                            <tbody>
+            <input
+                type="date"
+                id="reading-date"
+                value={selectedDate}
+                max={getLocalDate()}
+                onChange={(e) =>
+                    handleDateFilter(e.target.value)
+                }
+            />
 
-                                {readings.length > 0 ? (
+            {selectedDate && (
+                <button
+                    className="clear-filter-btn"
+                    onClick={handleClearDateFilter}
+                >
+                    Clear
+                </button>
+            )}
 
-                                    readings.slice(0, 5).map((reading) => (
+        </div>
 
-                                        <tr key={reading.id}>
+    </div>
 
-                                            <td>
-                                                {String(
-                                                    reading.reading_date
-                                                ).slice(0, 10)}
-                                            </td>
+    {/* Readings Table */}
+    <div className="readings-table-container">
 
-                                            <td>
-                                                {reading.time_slot}
-                                            </td>
+        <table className="readings-table">
 
-                                            <td>
-                                                {reading.glucose_value} mg/dL
-                                            </td>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Time Slot</th>
+                    <th>Glucose Value</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
 
-                                            <td>
+            <tbody>
 
-                                                <button
-                                                    onClick={() =>
-                                                        handleEditReading(reading)
-                                                    }
-                                                    style={{
-                                                        background: "#e0f2fe",
-                                                        color: "#0369a1",
-                                                        border: "none",
-                                                        padding: "7px 12px",
-                                                        borderRadius: "6px",
-                                                        cursor: "pointer",
-                                                        marginRight: "8px"
-                                                    }}
-                                                >
-                                                    Edit
-                                                </button>
+                {paginatedReadings.length > 0 ? (
 
-                                                <button
-                                                    onClick={() =>
-                                                        handleDeleteReading(reading.id)
-                                                    }
-                                                    style={{
-                                                        background: "#fee2e2",
-                                                        color: "#b91c1c",
-                                                        border: "none",
-                                                        padding: "7px 12px",
-                                                        borderRadius: "6px",
-                                                        cursor: "pointer"
-                                                    }}
-                                                >
-                                                    Delete
-                                                </button>
+                    paginatedReadings.map((reading) => (
 
-                                            </td>
+                        <tr key={reading.id}>
 
-                                        </tr>
-
-                                    ))
-
-                                ) : (
-
-                                    <tr>
-                                        <td colSpan="4">
-                                            No glucose readings found.
-                                        </td>
-                                    </tr>
-
+                            <td>
+                                {formatReadingDate(
+                                    reading.reading_date
                                 )}
+                            </td>
 
-                            </tbody>
+                            <td>
+                                {reading.time_slot}
+                            </td>
 
-                        </table>
+                            <td>
+                                <span className="glucose-value">
+                                    {reading.glucose_value} mg/dL
+                                </span>
+                            </td>
 
-                    </div>
+                            <td>
+                                <span className="record-status">
+                                    Recorded
+                                </span>
+                            </td>
 
-                </section>
+                            <td>
+                                <div className="table-actions">
+
+                                    <button
+                                        className="edit-btn"
+                                        onClick={() =>
+                                            handleEditReading(reading)
+                                        }
+                                    >
+                                        Edit
+                                    </button>
+
+                                    <button
+                                        className="delete-btn"
+                                        onClick={() =>
+                                            handleDeleteReading(reading.id)
+                                        }
+                                    >
+                                        Delete
+                                    </button>
+
+                                </div>
+                            </td>
+
+                        </tr>
+
+                    ))
+
+                ) : (
+
+                    <tr>
+                        <td colSpan="5" className="no-readings">
+                            No readings found for this date.
+                        </td>
+                    </tr>
+
+                )}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    {/* Pagination */}
+    <div className="pagination-container">
+
+        <div className="pagination-info">
+
+            Showing{" "}
+            {filteredReadings.length === 0
+                ? 0
+                : indexOfFirstReading + 1}
+            {" - "}
+            {Math.min(
+                indexOfLastReading,
+                filteredReadings.length
+            )}
+            {" of "}
+            {filteredReadings.length} readings
+
+        </div>
+
+        <div className="pagination-buttons">
+
+            <button
+                className="pagination-btn"
+                onClick={handlePreviousPage}
+                disabled={currentPage === 1}
+            >
+                ← Previous
+            </button>
+
+            <span className="page-number">
+                Page {currentPage} of {totalPages}
+            </span>
+
+            <button
+                className="pagination-btn"
+                onClick={handleNextPage}
+                disabled={currentPage === totalPages}
+            >
+                Next →
+            </button>
+
+        </div>
+
+    </div>
+
+</section>
 
             </main>
 

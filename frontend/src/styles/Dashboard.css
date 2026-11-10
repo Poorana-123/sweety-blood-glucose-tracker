@@ -210,3 +210,536 @@ td {
         font-size: 26px;
     }
 }
+
+/* ==============================
+   TODAY'S GLUCOSE TRACKING
+================================ */
+
+.today-tracking-section {
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 22px;
+    margin: 30px 0;
+    box-shadow: 0 8px 30px rgba(15, 23, 42, 0.05);
+}
+
+.tracking-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 25px;
+}
+
+.tracking-label {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: #0d9488;
+}
+
+.tracking-heading h2 {
+    font-size: 25px;
+    color: #0f172a;
+    margin: 8px 0;
+}
+
+.tracking-heading p {
+    color: #64748b;
+    font-size: 14px;
+}
+
+.tracking-progress {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: #f0fdfa;
+    padding: 16px 25px;
+    border-radius: 15px;
+}
+
+.progress-count {
+    font-size: 28px;
+    font-weight: 800;
+    color: #0f766e;
+}
+
+.progress-text {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 4px;
+}
+
+/* Progress Bar */
+
+.tracking-progress-bar {
+    width: 100%;
+    height: 8px;
+    background: #f1f5f9;
+    border-radius: 20px;
+    overflow: hidden;
+    margin-bottom: 25px;
+}
+
+.tracking-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #14b8a6, #059669);
+    border-radius: 20px;
+    transition: width 0.6s ease;
+}
+
+/* Cards */
+
+.session-cards {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 20px;
+}
+
+.session-card {
+    padding: 22px;
+    border-radius: 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 245px;
+    transition: transform 0.3s ease,
+                box-shadow 0.3s ease,
+                border-color 0.3s ease;
+}
+
+/* Completed Card */
+
+.session-completed {
+    background: linear-gradient(
+        145deg,
+        #f0fdf4,
+        #dcfce7
+    );
+
+    border: 1px solid #bbf7d0;
+}
+
+.session-completed:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 25px rgba(22, 163, 74, 0.12);
+}
+
+/* Pending Card */
+
+.session-pending {
+    background: linear-gradient(
+        145deg,
+        #fffaf0,
+        #fff7ed
+    );
+
+    border: 1px solid #fed7aa;
+}
+
+.session-pending:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 25px rgba(234, 88, 12, 0.10);
+}
+
+/* Card Top */
+
+.session-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.session-icon {
+    font-size: 28px;
+}
+
+.session-status {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 7px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+}
+
+.status-completed {
+    background: #bbf7d0;
+    color: #15803d;
+}
+
+.status-pending {
+    background: #fed7aa;
+    color: #c2410c;
+}
+
+/* Card Content */
+
+.session-card-content {
+    margin: 22px 0;
+}
+
+.session-number {
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    font-weight: 700;
+    color: #64748b;
+}
+
+.session-card-content h3 {
+    font-size: 17px;
+    color: #1e293b;
+    margin: 8px 0 15px;
+}
+
+.session-reading h2 {
+    font-size: 30px;
+    font-weight: 800;
+    color: #15803d;
+    margin: 0;
+}
+
+.session-reading h2 span {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.session-reading p {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 6px;
+}
+
+.pending-reading h2 {
+    color: #c2410c;
+}
+
+/* Buttons */
+
+.session-card-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.session-card-actions button {
+    padding: 10px 12px;
+    border: none;
+    border-radius: 9px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.session-add-button {
+    width: 100%;
+    background: #ea580c;
+    color: white;
+}
+
+.session-add-button:hover {
+    background: #c2410c;
+    transform: scale(1.02);
+}
+
+.session-edit-button {
+    flex: 1;
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.session-edit-button:hover {
+    background: #bbf7d0;
+}
+
+.session-delete-button {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.session-delete-button:hover {
+    background: #fecaca;
+}
+
+/* Responsive */
+
+@media (max-width: 1100px) {
+    .session-cards {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 600px) {
+    .today-tracking-section {
+        padding: 20px;
+    }
+
+    .tracking-heading {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .session-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .session-card {
+        min-height: 220px;
+    }
+}
+
+/* Reading History */
+
+.readings-history {
+    background: #ffffff;
+    padding: 28px;
+    border-radius: 20px;
+    margin-top: 30px;
+    box-shadow: 0 8px 30px rgba(15, 23, 42, 0.05);
+}
+
+.readings-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 25px;
+}
+
+.history-label {
+    color: #0d9488;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+}
+
+.readings-header h2 {
+    font-size: 25px;
+    color: #0f172a;
+    margin: 8px 0;
+}
+
+.readings-header p {
+    color: #64748b;
+    font-size: 14px;
+}
+
+/* Date Filter */
+
+.date-filter {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.date-filter label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #475569;
+}
+
+.date-filter input {
+    padding: 10px 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    color: #334155;
+    background: #f8fafc;
+    outline: none;
+    transition: 0.3s ease;
+}
+
+.date-filter input:focus {
+    border-color: #0d9488;
+    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.12);
+}
+
+.clear-filter-btn {
+    padding: 9px 13px;
+    border: none;
+    border-radius: 8px;
+    background: #fee2e2;
+    color: #b91c1c;
+    cursor: pointer;
+    font-weight: 600;
+    transition: 0.3s;
+}
+
+.clear-filter-btn:hover {
+    background: #fecaca;
+}
+
+/* Table */
+
+.readings-table-container {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.readings-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 650px;
+}
+
+.readings-table thead {
+    background: #f0fdfa;
+}
+
+.readings-table th {
+    padding: 16px;
+    text-align: left;
+    font-size: 13px;
+    color: #0f766e;
+    font-weight: 700;
+}
+
+.readings-table td {
+    padding: 16px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #475569;
+    font-size: 13px;
+}
+
+.readings-table tbody tr {
+    transition: background 0.25s ease;
+}
+
+.readings-table tbody tr:hover {
+    background: #f8fafc;
+}
+
+.glucose-value {
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.record-status {
+    background: #dcfce7;
+    color: #15803d;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+/* Table Actions */
+
+.table-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.edit-btn,
+.delete-btn {
+    border: none;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    transition: 0.25s ease;
+}
+
+.edit-btn {
+    background: #ccfbf1;
+    color: #0f766e;
+}
+
+.edit-btn:hover {
+    background: #99f6e4;
+    transform: translateY(-2px);
+}
+
+.delete-btn {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.delete-btn:hover {
+    background: #fecaca;
+    transform: translateY(-2px);
+}
+
+/* Empty State */
+
+.no-readings {
+    text-align: center;
+    padding: 40px !important;
+    color: #94a3b8 !important;
+}
+
+/* Pagination */
+
+.pagination-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+    margin-top: 25px;
+}
+
+.pagination-info {
+    font-size: 13px;
+    color: #64748b;
+}
+
+.pagination-buttons {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.pagination-btn {
+    padding: 10px 16px;
+    border: 1px solid #ccfbf1;
+    border-radius: 10px;
+    background: #f0fdfa;
+    color: #0f766e;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+    background: #0d9488;
+    color: #ffffff;
+    transform: translateY(-2px);
+}
+
+.pagination-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.page-number {
+    font-size: 13px;
+    font-weight: 700;
+    color: #334155;
+}
+
+/* Responsive */
+
+@media (max-width: 600px) {
+    .readings-history {
+        padding: 18px;
+    }
+
+    .readings-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .pagination-container {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .pagination-buttons {
+        width: 100%;
+        justify-content: space-between;
+    }
+}
