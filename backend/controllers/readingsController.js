@@ -194,7 +194,7 @@ const getDailyReport = async (req, res) => {
         const result = await pool.query(
             `SELECT
                 COUNT(*) AS total_readings,
-                ROUND(AVG(glucose_value)) AS average_glucose,
+                ROUND(AVG(glucose_value)::numeric, 1) AS average_glucose,
                 MIN(glucose_value) AS minimum_glucose,
                 MAX(glucose_value) AS maximum_glucose
              FROM readings
@@ -248,7 +248,7 @@ const getMTDReport = async (req, res) => {
         const result = await pool.query(
             `SELECT
                 COUNT(*) AS total_readings,
-                ROUND(AVG(glucose_value)) AS average_glucose,
+                ROUND(AVG(glucose_value)::numeric, 1) AS average_glucose,
                 MIN(glucose_value) AS minimum_glucose,
                 MAX(glucose_value) AS maximum_glucose
              FROM readings
@@ -311,7 +311,7 @@ const getPreviousMonthReport = async (req, res) => {
         const result = await pool.query(
             `SELECT
                 COUNT(*) AS total_readings,
-                ROUND(AVG(glucose_value)) AS average_glucose,
+                ROUND(AVG(glucose_value)::numeric, 1) AS average_glucose,
                 MIN(glucose_value) AS minimum_glucose,
                 MAX(glucose_value) AS maximum_glucose
              FROM readings

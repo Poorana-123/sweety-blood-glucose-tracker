@@ -6,6 +6,8 @@ const VALID_TIME_SLOTS = [
     "After dinner"
 ];
 
+
+
 const validateReading = (reading_date, time_slot, glucose_value) => {
 
     // Check required fields
@@ -17,6 +19,15 @@ const validateReading = (reading_date, time_slot, glucose_value) => {
     ) {
         return "All fields are required";
     }
+    // Reject future reading dates
+const today = new Date();
+
+const todayString =
+    `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
+if (reading_date > todayString) {
+    return "Future reading dates are not allowed";
+}
 
     // Validate date format and actual calendar date
     if (!/^\d{4}-\d{2}-\d{2}$/.test(reading_date)) {

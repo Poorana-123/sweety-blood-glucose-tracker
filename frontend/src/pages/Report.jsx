@@ -98,7 +98,7 @@ function Report() {
 
         const previousMonthDate = new Date(
             year,
-            month - 2,
+            month - 1,
             1
         );
 
@@ -129,14 +129,24 @@ function Report() {
         }
 
         if (reportType === "previousMonth") {
-            const previousMonth = getPreviousMonth(selectedMonth);
+    const previousMonth = getPreviousMonth(selectedMonth);
 
-            return readings.filter(
-                (reading) =>
-                    formatDate(reading.reading_date).slice(0, 7) ===
-                    previousMonth
-            );
-        }
+    console.log("Selected Month:", selectedMonth);
+    console.log("Previous Month:", previousMonth);
+
+    console.log(
+        "October Readings:",
+        readings.filter((reading) =>
+            formatDate(reading.reading_date).startsWith("2026-10")
+        )
+    );
+
+    return readings.filter((reading) => {
+        const readingMonth = formatDate(reading.reading_date).slice(0, 7);
+
+        return readingMonth === previousMonth;
+    });
+}
 
         return [];
     }, [

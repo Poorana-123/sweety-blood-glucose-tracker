@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../services/api";
@@ -17,20 +18,14 @@ function Dashboard() {
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
 
-    // CRUD form states
     const [showForm, setShowForm] = useState(false);
     const [editingId, setEditingId] = useState(null);
     const [saving, setSaving] = useState(false);
 
-    // Date filter
-const [selectedDate, setSelectedDate] = useState("");
+    const [selectedDate, setSelectedDate] = useState("");
+    const [currentPage, setCurrentPage] = useState(1);
 
-// Pagination
-const [currentPage, setCurrentPage] = useState(1);
-
-const readingsPerPage = 5;
-
-
+    const readingsPerPage = 5;
 
     const getLocalDate = () => {
         const today = new Date();
@@ -50,7 +45,6 @@ const readingsPerPage = 5;
 
     const [formData, setFormData] = useState(initialFormData);
 
-    // Load user and dashboard data
     useEffect(() => {
         const storedUser = localStorage.getItem("user");
 
@@ -65,7 +59,7 @@ const readingsPerPage = 5;
         fetchDashboardData();
     }, []);
 
-    // Fetch all dashboard data
+    // Fetch dashboard data
     const fetchDashboardData = async (showLoader = true) => {
         try {
             if (showLoader) {
@@ -129,14 +123,13 @@ const readingsPerPage = 5;
         navigate("/login");
     };
 
-    // Current month name
+    // Month names
     const getMonthName = () => {
         return new Date().toLocaleString("en-IN", {
             month: "long"
         });
     };
 
-    // Previous month name
     const getPreviousMonthName = () => {
         const date = new Date();
 
@@ -148,22 +141,22 @@ const readingsPerPage = 5;
         });
     };
 
-    // Open Add Reading form
+    // Add reading
     const handleAddReading = (timeSlot = "Morning (fasting)") => {
-    setEditingId(null);
+        setEditingId(null);
 
-    setFormData({
-        ...initialFormData,
-        reading_date: getLocalDate(),
-        time_slot: timeSlot
-    });
+        setFormData({
+            ...initialFormData,
+            reading_date: getLocalDate(),
+            time_slot: timeSlot
+        });
 
-    setError("");
-    setSuccess("");
-    setShowForm(true);
-};
+        setError("");
+        setSuccess("");
+        setShowForm(true);
+    };
 
-    // Open Edit Reading form
+    // Edit reading
     const handleEditReading = (reading) => {
         setEditingId(reading.id);
 
@@ -178,7 +171,7 @@ const readingsPerPage = 5;
         setShowForm(true);
     };
 
-    // Handle form input changes
+    // Input changes
     const handleInputChange = (e) => {
         const { name, value } = e.target;
 
@@ -188,7 +181,7 @@ const readingsPerPage = 5;
         }));
     };
 
-    // CREATE and UPDATE reading
+    // Create / Update
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -204,12 +197,10 @@ const readingsPerPage = 5;
             };
 
             if (editingId) {
-                // UPDATE - PUT
                 await API.put(`/readings/${editingId}`, payload);
 
                 setSuccess("Reading updated successfully!");
             } else {
-                // CREATE - POST
                 await API.post("/readings", payload);
 
                 setSuccess("Reading added successfully!");
@@ -219,7 +210,6 @@ const readingsPerPage = 5;
             setEditingId(null);
             setFormData(initialFormData);
 
-            // Refresh readings and reports
             await fetchDashboardData(false);
 
         } catch (err) {
@@ -234,15 +224,13 @@ const readingsPerPage = 5;
         }
     };
 
-    // DELETE reading
+    // Delete
     const handleDeleteReading = async (id) => {
         const confirmDelete = window.confirm(
             "Are you sure you want to delete this glucose reading?"
         );
 
-        if (!confirmDelete) {
-            return;
-        }
+        if (!confirmDelete) return;
 
         try {
             setError("");
@@ -252,7 +240,6 @@ const readingsPerPage = 5;
 
             setSuccess("Reading deleted successfully!");
 
-            // Refresh readings and reports
             await fetchDashboardData(false);
 
         } catch (err) {
@@ -265,115 +252,95 @@ const readingsPerPage = 5;
         }
     };
 
-    // Convert reading date to YYYY-MM-DD
-const formatReadingDate = (dateValue) => {
-    if (!dateValue) return "";
+    // Format reading date
+    const formatReadingDate = (dateValue) => {
+        if (!dateValue) return "";
 
-    return String(dateValue).slice(0, 10);
-};
+        return String(dateValue).slice(0, 10);
+    };
 
-// Filter readings based on selected date
-const filteredReadings = readings.filter((reading) => {
-    if (!selectedDate) {
-        return true;
-    }
+    // Filter readings
+    const filteredReadings = readings.filter((reading) => {
+        if (!selectedDate) return true;
 
-    return formatReadingDate(reading.reading_date) === selectedDate;
-});
+        return formatReadingDate(reading.reading_date) === selectedDate;
+    });
 
-// Total pages
-const totalPages = Math.max(
-    1,
-    Math.ceil(filteredReadings.length / readingsPerPage)
-);
-
-// Current page readings
-const indexOfLastReading = currentPage * readingsPerPage;
-
-const indexOfFirstReading =
-    indexOfLastReading - readingsPerPage;
-
-const paginatedReadings = filteredReadings.slice(
-    indexOfFirstReading,
-    indexOfLastReading
-);
-
-// Previous page
-const handlePreviousPage = () => {
-    setCurrentPage((prev) => Math.max(prev - 1, 1));
-};
-
-// Next page
-const handleNextPage = () => {
-    setCurrentPage((prev) =>
-        Math.min(prev + 1, totalPages)
+    // Pagination
+    const totalPages = Math.max(
+        1,
+        Math.ceil(filteredReadings.length / readingsPerPage)
     );
-};
 
-// Date filter change
-const handleDateFilter = (date) => {
-    setSelectedDate(date);
-    setCurrentPage(1);
-};
+    const indexOfLastReading = currentPage * readingsPerPage;
+    const indexOfFirstReading = indexOfLastReading - readingsPerPage;
 
-// Clear date filter
-const handleClearDateFilter = () => {
-    setSelectedDate("");
-    setCurrentPage(1);
-};
+    const paginatedReadings = filteredReadings.slice(
+        indexOfFirstReading,
+        indexOfLastReading
+    );
 
+    const handlePreviousPage = () => {
+        setCurrentPage((prev) => Math.max(prev - 1, 1));
+    };
+
+    const handleNextPage = () => {
+        setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+    };
+
+    const handleDateFilter = (date) => {
+        setSelectedDate(date);
+        setCurrentPage(1);
+    };
+
+    const handleClearDateFilter = () => {
+        setSelectedDate("");
+        setCurrentPage(1);
+    };
+
+    // Time slots
     const timeSlots = [
-    "Morning (fasting)",
-    "After breakfast",
-    "After lunch",
-    "After dinner"
-];
+        "Morning (fasting)",
+        "After breakfast",
+        "After lunch",
+        "After dinner"
+    ];
 
-// Get today's date in local YYYY-MM-DD format
-const getTodayDate = () => {
-    const today = new Date();
+    const sessionIcons = ["☀", "◒", "◉", "☾"];
 
-    return `${today.getFullYear()}-${String(
-        today.getMonth() + 1
-    ).padStart(2, "0")}-${String(
-        today.getDate()
-    ).padStart(2, "0")}`;
-};
+    // Today's readings
+    const getTodayDate = () => getLocalDate();
 
-// Normalize API date to YYYY-MM-DD
-const normalizeDate = (dateValue) => {
-    const dateString = String(dateValue);
+    const normalizeDate = (dateValue) => {
+        const dateString = String(dateValue);
 
-    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
-        return dateString;
-    }
+        if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+            return dateString;
+        }
 
-    // Handles timestamps such as 2026-11-09T18:30:00.000Z
-    const date = new Date(dateString);
+        const date = new Date(dateString);
 
-    return `${date.getFullYear()}-${String(
-        date.getMonth() + 1
-    ).padStart(2, "0")}-${String(
-        date.getDate()
-    ).padStart(2, "0")}`;
-};
+        return `${date.getFullYear()}-${String(
+            date.getMonth() + 1
+        ).padStart(2, "0")}-${String(
+            date.getDate()
+        ).padStart(2, "0")}`;
+    };
 
-// Find today's readings
-const todayReadings = readings.filter(
-    (reading) =>
-        normalizeDate(reading.reading_date) === getTodayDate()
-);
+    const todayReadings = readings.filter(
+        (reading) =>
+            normalizeDate(reading.reading_date) === getTodayDate()
+    );
 
-// Calculate completion
-const completedSlots = timeSlots.filter((slot) =>
-    todayReadings.some(
-        (reading) => reading.time_slot === slot
-    )
-).length;
+    const completedSlots = timeSlots.filter((slot) =>
+        todayReadings.some(
+            (reading) => reading.time_slot === slot
+        )
+    ).length;
 
-const progressPercentage = (completedSlots / 4) * 100;
+    const progressPercentage = (completedSlots / 4) * 100;
 
-    // Close form
+    // Cancel form
     const handleCancel = () => {
         setShowForm(false);
         setEditingId(null);
@@ -381,24 +348,12 @@ const progressPercentage = (completedSlots / 4) * 100;
         setError("");
     };
 
-    // Report Card component
-    const ReportCard = ({ title, value, unit = "" }) => {
-        return (
-            <div className="report-card">
-                <p>{title}</p>
-
-                <h3>
-                    {value ?? "--"} {unit}
-                </h3>
-            </div>
-        );
-    };
-
-    // Loading screen
+    // Loading
     if (loading) {
         return (
             <div className="dashboard-loading">
-                Loading dashboard...
+                <div className="loading-spinner"></div>
+                <p>Preparing your health dashboard...</p>
             </div>
         );
     }
@@ -406,623 +361,581 @@ const progressPercentage = (completedSlots / 4) * 100;
     return (
         <div className="dashboard-container">
 
-            {/* Navbar */}
-            <nav className="dashboard-navbar">
+            {/* Sidebar */}
+            <aside className="dashboard-sidebar">
 
-                <div className="dashboard-logo">
-                    <span>♥</span> Sweety
+                <div className="sidebar-brand">
+                    <div className="brand-icon">♥</div>
+                    <span>Sweety</span>
                 </div>
 
-                <div className="dashboard-user">
+                <div className="sidebar-label">
+                    WORKSPACE
+                </div>
 
-                    <span>
-                        Welcome, {user?.name || "User"}
-                    </span>
+                <button className="sidebar-link active">
+                    <span className="sidebar-link-icon">▦</span>
+                    Dashboard
+                </button>
+
+                <button
+                    className="sidebar-link"
+                    onClick={() => navigate("/reports")}
+                >
+                    <span className="sidebar-link-icon">◫</span>
+                    Reports
+                </button>
+
+                <div className="sidebar-bottom">
+                    <div className="sidebar-profile">
+                        <div className="profile-avatar">
+                            {(user?.name || "U").charAt(0).toUpperCase()}
+                        </div>
+
+                        <div className="profile-info">
+                            <strong>{user?.name || "User"}</strong>
+                            <small>Personal account</small>
+                        </div>
+                    </div>
 
                     <button
-                        className="reports-navigation-btn"
-                        onClick={() => navigate("/reports")}>
-                        📊 View Reports
+                        className="sidebar-logout"
+                        onClick={handleLogout}
+                    >
+                        ↪ Logout
                     </button>
-
-                    <button onClick={handleLogout}>
-                        Logout
-                    </button>
-
                 </div>
 
-            </nav>
+            </aside>
 
             {/* Main Content */}
             <main className="dashboard-main">
 
-                {/* Dashboard Heading */}
-                <section className="dashboard-heading">
+                {/* Topbar */}
+                <header className="dashboard-topbar">
 
-                    <div>
+                    <div className="topbar-breadcrumb">
+                        Workspace <span>/</span> Dashboard
+                    </div>
 
-                        <p className="dashboard-label">
-                            BLOOD GLUCOSE TRACKER
-                        </p>
+                    <div className="topbar-right">
+                        <span className="topbar-status">
+                            <span className="status-dot"></span>
+                            Tracker Active
+                        </span>
+                    </div>
+
+                </header>
+
+                {/* Welcome */}
+                <section className="dashboard-welcome">
+
+                    <div className="welcome-content">
+                        <span className="welcome-tag">
+                            YOUR HEALTH OVERVIEW
+                        </span>
 
                         <h1>
-                            Your Health Dashboard
+                            Welcome back, {user?.name || "User"}
                         </h1>
 
                         <p>
-                            Keep track of your glucose readings and reports.
+                            Stay consistent. Your health journey matters.
                         </p>
-
                     </div>
 
-                    <button
-                        className="add-reading-button"
-                        onClick={handleAddReading}
-                    >
-                        + Add Reading
-                    </button>
+                    <div className="welcome-actions">
+
+                        <div className="welcome-date">
+                            <span>Today</span>
+
+                            <strong>
+                                {new Date().toLocaleDateString("en-IN", {
+                                    day: "2-digit",
+                                    month: "short",
+                                    year: "numeric"
+                                })}
+                            </strong>
+                        </div>
+
+                        <button
+                            className="add-reading-button"
+                            onClick={handleAddReading}
+                        >
+                            + Add Reading
+                        </button>
+
+                    </div>
 
                 </section>
 
-                {/* Today's Glucose Tracking */}
-<section className="today-tracking-section">
-
-    <div className="tracking-heading">
-        <div>
-            <span className="tracking-label">
-                DAILY MONITORING
-            </span>
-
-            <h2>Today's Glucose Tracking</h2>
-
-            <p>
-                Keep track of your four daily glucose sessions.
-            </p>
-        </div>
-
-        <div className="tracking-progress">
-            <span className="progress-count">
-                {completedSlots}/4
-            </span>
-
-            <span className="progress-text">
-                Sessions Completed
-            </span>
-        </div>
-    </div>
-
-    {/* Progress Bar */}
-    <div className="tracking-progress-bar">
-        <div
-            className="tracking-progress-fill"
-            style={{
-                width: `${progressPercentage}%`
-            }}
-        />
-    </div>
-
-    {/* Session Cards */}
-    <div className="session-cards">
-
-        {timeSlots.map((slot, index) => {
-
-            const reading = todayReadings.find(
-                (item) => item.time_slot === slot
-            );
-
-            const isCompleted = Boolean(reading);
-
-            return (
-                <div
-                    key={slot}
-                    className={`session-card ${
-                        isCompleted
-                            ? "session-completed"
-                            : "session-pending"
-                    }`}
-                >
-
-                    <div className="session-card-top">
-
-                        <div className="session-icon">
-                            {["☀️", "🍳", "🌤️", "🌙"][index]}
-                        </div>
-
-                        <span
-                            className={`session-status ${
-                                isCompleted
-                                    ? "status-completed"
-                                    : "status-pending"
-                            }`}
-                        >
-                            {isCompleted
-                                ? "✓ Completed"
-                                : "● Pending"}
-                        </span>
-
-                    </div>
-
-                    <div className="session-card-content">
-
-                        <span className="session-number">
-                            SESSION 0{index + 1}
-                        </span>
-
-                        <h3>{slot}</h3>
-
-                        {isCompleted ? (
-
-                            <div className="session-reading">
-
-                                <h2>
-                                    {reading.glucose_value}
-                                    <span> mg/dL</span>
-                                </h2>
-
-                                <p>
-                                    Reading recorded successfully
-                                </p>
-
-                            </div>
-
-                        ) : (
-
-                            <div className="session-reading pending-reading">
-
-                                <h2>--</h2>
-
-                                <p>
-                                    No reading recorded yet
-                                </p>
-
-                            </div>
-
-                        )}
-
-                    </div>
-
-                    <div className="session-card-actions">
-
-                        {isCompleted ? (
-
-                            <>
-
-                                <button
-                                    className="session-edit-button"
-                                    onClick={() =>
-                                        handleEditReading(reading)
-                                    }
-                                >
-                                    ✏️ Edit Reading
-                                </button>
-
-                                <button
-                                    className="session-delete-button"
-                                    onClick={() =>
-                                        handleDeleteReading(reading.id)
-                                    }
-                                >
-                                    Delete
-                                </button>
-
-                            </>
-
-                        ) : (
-
-                            <button
-                                className="session-add-button"
-                                onClick={() =>
-                                    handleAddReading(slot)
-                                }
-                            >
-                                + Add Reading
-                            </button>
-
-                        )}
-
-                    </div>
-
-                </div>
-            );
-
-        })}
-
-    </div>
-
-</section>
-
-                {/* Success Message */}
+                {/* Messages */}
                 {success && (
-                    <div
-                        style={{
-                            background: "#e6f9ef",
-                            color: "#15803d",
-                            padding: "12px 16px",
-                            borderRadius: "8px",
-                            marginBottom: "20px"
-                        }}
-                    >
-                        {success}
+                    <div className="dashboard-success">
+                        <span>✓</span> {success}
                     </div>
                 )}
 
-                {/* Error Message */}
                 {error && (
                     <div className="dashboard-error">
                         {error}
                     </div>
                 )}
 
-                {/* Today's Report */}
-                <section className="report-section">
+                {/* Daily Monitoring */}
+                <section className="tracking-section">
 
-                    <h2>Today's Report</h2>
+                    <div className="section-heading">
 
-                    <div className="report-cards">
+                        <div>
+                            <span className="section-eyebrow">
+                                DAILY MONITORING
+                            </span>
 
-                        <ReportCard
-                            title="Total Readings"
-                            value={
-                                dailyReport?.report?.total_readings ?? 0
-                            }
+                            <h2>Today's Sessions</h2>
+
+                            <p>
+                                Your four scheduled glucose check-ins.
+                            </p>
+                        </div>
+
+                        <div className="tracking-summary">
+                            <strong>{completedSlots}<span>/4</span></strong>
+                            <small>Completed</small>
+                        </div>
+
+                    </div>
+
+                    <div className="tracking-progress">
+                        <div
+                            className="tracking-progress-fill"
+                            style={{ width: `${progressPercentage}%` }}
                         />
+                    </div>
 
-                        <ReportCard
-                            title="Average Glucose"
-                            value={
-                                dailyReport?.report?.average_glucose ?? "--"
-                            }
-                            unit="mg/dL"
-                        />
+                    <div className="session-grid">
 
-                        <ReportCard
-                            title="Minimum Glucose"
-                            value={
-                                dailyReport?.report?.minimum_glucose ?? "--"
-                            }
-                            unit="mg/dL"
-                        />
+                        {timeSlots.map((slot, index) => {
+                            const reading = todayReadings.find(
+                                (item) => item.time_slot === slot
+                            );
 
-                        <ReportCard
-                            title="Maximum Glucose"
-                            value={
-                                dailyReport?.report?.maximum_glucose ?? "--"
-                            }
-                            unit="mg/dL"
-                        />
+                            const isCompleted = Boolean(reading);
+
+                            return (
+                                <article
+                                    key={slot}
+                                    className={`session-card ${
+                                        isCompleted ? "completed" : "pending"
+                                    }`}
+                                >
+
+                                    <div className="session-card-header">
+
+                                        <div className={`session-icon session-icon-${index}`}>
+                                            {sessionIcons[index]}
+                                        </div>
+
+                                        <span className={`session-badge ${
+                                            isCompleted ? "completed-badge" : "pending-badge"
+                                        }`}>
+                                            {isCompleted ? "Completed" : "Pending"}
+                                        </span>
+
+                                    </div>
+
+                                    <div className="session-card-body">
+
+                                        <span className="session-number">
+                                            SESSION 0{index + 1}
+                                        </span>
+
+                                        <h3>{slot}</h3>
+
+                                        <div className="session-value">
+                                            {isCompleted ? (
+                                                <>
+                                                    <strong>{reading.glucose_value}</strong>
+                                                    <span>mg/dL</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <strong className="empty-value">--</strong>
+                                                    <span>mg/dL</span>
+                                                </>
+                                            )}
+                                        </div>
+
+                                    </div>
+
+                                    <div className="session-card-footer">
+
+                                        {isCompleted ? (
+                                            <>
+                                                <button
+                                                    className="session-edit"
+                                                    onClick={() => handleEditReading(reading)}
+                                                >
+                                                    Edit
+                                                </button>
+
+                                                <button
+                                                    className="session-delete"
+                                                    onClick={() => handleDeleteReading(reading.id)}
+                                                >
+                                                    Delete
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <button
+                                                className="session-add"
+                                                onClick={() => handleAddReading(slot)}
+                                            >
+                                                + Record Reading
+                                            </button>
+                                        )}
+
+                                    </div>
+
+                                </article>
+                            );
+                        })}
 
                     </div>
 
                 </section>
 
-                {/* Month-to-Date Report */}
+                {/* Report Summary */}
                 <section className="report-section">
 
-                    <h2>
-                        {getMonthName()} — Month to Date
-                    </h2>
+                    <div className="section-heading report-heading">
 
-                    <div className="report-cards">
+                        <div>
+                            <span className="section-eyebrow">
+                                ANALYTICS OVERVIEW
+                            </span>
 
-                        <ReportCard
-                            title="Total Readings"
-                            value={
-                                mtdReport?.report?.total_readings ?? 0
-                            }
-                        />
+                            <h2>Glucose Report Summary</h2>
 
-                        <ReportCard
-                            title="Average Glucose"
-                            value={
-                                mtdReport?.report?.average_glucose ?? "--"
-                            }
-                            unit="mg/dL"
-                        />
+                            <p>
+                                Compare your readings across different periods.
+                            </p>
+                        </div>
 
-                        <ReportCard
-                            title="Minimum Glucose"
-                            value={
-                                mtdReport?.report?.minimum_glucose ?? "--"
-                            }
-                            unit="mg/dL"
-                        />
+                        <button
+                            className="view-report-button"
+                            onClick={() => navigate("/reports")}
+                        >
+                            Detailed Reports →
+                        </button>
 
-                        <ReportCard
-                            title="Maximum Glucose"
-                            value={
-                                mtdReport?.report?.maximum_glucose ?? "--"
-                            }
-                            unit="mg/dL"
-                        />
+                    </div>
+
+                    <div className="report-table-wrapper">
+
+                        <table className="report-table">
+
+                            <thead>
+                                <tr>
+                                    <th>Report Period</th>
+                                    <th>Total Readings</th>
+                                    <th>Average</th>
+                                    <th>Minimum</th>
+                                    <th>Maximum</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+
+                                <tr>
+                                    <td>
+                                        <div className="report-period">
+                                            <span className="report-dot today-dot"></span>
+
+                                            <div>
+                                                <strong>Today</strong>
+                                                <small>Daily summary</small>
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                    <td>{dailyReport?.report?.total_readings ?? 0}</td>
+
+                                    <td>
+                                        {dailyReport?.report?.average_glucose ?? "--"}
+                                        <small> mg/dL</small>
+                                    </td>
+
+                                    <td>{dailyReport?.report?.minimum_glucose ?? "--"}</td>
+
+                                    <td>{dailyReport?.report?.maximum_glucose ?? "--"}</td>
+                                </tr>
+
+                                <tr>
+                                    <td>
+                                        <div className="report-period">
+                                            <span className="report-dot month-dot"></span>
+
+                                            <div>
+                                                <strong>{getMonthName()}</strong>
+                                                <small>Month to date</small>
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                    <td>{mtdReport?.report?.total_readings ?? 0}</td>
+
+                                    <td>
+                                        {mtdReport?.report?.average_glucose ?? "--"}
+                                        <small> mg/dL</small>
+                                    </td>
+
+                                    <td>{mtdReport?.report?.minimum_glucose ?? "--"}</td>
+
+                                    <td>{mtdReport?.report?.maximum_glucose ?? "--"}</td>
+                                </tr>
+
+                                <tr>
+                                    <td>
+                                        <div className="report-period">
+                                            <span className="report-dot previous-dot"></span>
+
+                                            <div>
+                                                <strong>{getPreviousMonthName()}</strong>
+                                                <small>Previous month</small>
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                    <td>{previousMonthReport?.report?.total_readings ?? 0}</td>
+
+                                    <td>
+                                        {previousMonthReport?.report?.average_glucose ?? "--"}
+                                        <small> mg/dL</small>
+                                    </td>
+
+                                    <td>{previousMonthReport?.report?.minimum_glucose ?? "--"}</td>
+
+                                    <td>{previousMonthReport?.report?.maximum_glucose ?? "--"}</td>
+                                </tr>
+
+                            </tbody>
+
+                        </table>
 
                     </div>
 
                 </section>
 
-                {/* Previous Month Report */}
-                <section className="report-section">
+                {/* Reading History */}
+                <section className="history-section">
 
-                    <h2>
-                        {getPreviousMonthName()} Report
-                    </h2>
+                    <div className="section-heading history-heading">
 
-                    <div className="report-cards">
+                        <div>
+                            <span className="section-eyebrow">
+                                GLUCOSE RECORDS
+                            </span>
 
-                        <ReportCard
-                            title="Total Readings"
-                            value={
-                                previousMonthReport?.report?.total_readings ?? 0
-                            }
-                        />
+                            <h2>Reading History</h2>
 
-                        <ReportCard
-                            title="Average Glucose"
-                            value={
-                                previousMonthReport?.report?.average_glucose ?? "--"
-                            }
-                            unit="mg/dL"
-                        />
+                            <p>
+                                Manage and review your saved readings.
+                            </p>
+                        </div>
 
-                        <ReportCard
-                            title="Minimum Glucose"
-                            value={
-                                previousMonthReport?.report?.minimum_glucose ?? "--"
-                            }
-                            unit="mg/dL"
-                        />
+                        <div className="history-filter">
 
-                        <ReportCard
-                            title="Maximum Glucose"
-                            value={
-                                previousMonthReport?.report?.maximum_glucose ?? "--"
-                            }
-                            unit="mg/dL"
-                        />
+                            <label htmlFor="reading-date">
+                                Date
+                            </label>
+
+                            <input
+                                type="date"
+                                id="reading-date"
+                                value={selectedDate}
+                                max={getLocalDate()}
+                                onChange={(e) => handleDateFilter(e.target.value)}
+                            />
+
+                            {selectedDate && (
+                                <button
+                                    className="clear-filter"
+                                    onClick={handleClearDateFilter}
+                                >
+                                    Clear
+                                </button>
+                            )}
+
+                        </div>
 
                     </div>
 
-                </section>
+                    <div className="history-table-wrapper">
 
-                {/* Readings History */}
-<section className="readings-history">
+                        <table className="history-table">
 
-    <div className="readings-header">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Time Slot</th>
+                                    <th>Glucose Value</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
 
-        <div>
-            <span className="history-label">
-                GLUCOSE RECORDS
-            </span>
+                            <tbody>
 
-            <h2>Reading History</h2>
+                                {paginatedReadings.length > 0 ? (
+                                    paginatedReadings.map((reading) => (
+                                        <tr key={reading.id}>
 
-            <p>
-                View and manage your glucose readings.
-            </p>
-        </div>
+                                            <td>
+                                                {formatReadingDate(reading.reading_date)}
+                                            </td>
 
-        {/* Date Filter */}
-        <div className="date-filter">
+                                            <td>{reading.time_slot}</td>
 
-            <label htmlFor="reading-date">
-                Filter by Date
-            </label>
+                                            <td>
+                                                <span className="history-glucose">
+                                                    {reading.glucose_value}
+                                                    <small> mg/dL</small>
+                                                </span>
+                                            </td>
 
-            <input
-                type="date"
-                id="reading-date"
-                value={selectedDate}
-                max={getLocalDate()}
-                onChange={(e) =>
-                    handleDateFilter(e.target.value)
-                }
-            />
+                                            <td>
+                                                <span className="history-status">
+                                                    <span></span>
+                                                    Recorded
+                                                </span>
+                                            </td>
 
-            {selectedDate && (
-                <button
-                    className="clear-filter-btn"
-                    onClick={handleClearDateFilter}
-                >
-                    Clear
-                </button>
-            )}
+                                            <td>
+                                                <div className="history-actions">
 
-        </div>
+                                                    <button
+                                                        className="history-edit"
+                                                        onClick={() => handleEditReading(reading)}
+                                                    >
+                                                        Edit
+                                                    </button>
 
-    </div>
+                                                    <button
+                                                        className="history-delete"
+                                                        onClick={() => handleDeleteReading(reading.id)}
+                                                    >
+                                                        Delete
+                                                    </button>
 
-    {/* Readings Table */}
-    <div className="readings-table-container">
+                                                </div>
+                                            </td>
 
-        <table className="readings-table">
-
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Time Slot</th>
-                    <th>Glucose Value</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-
-            <tbody>
-
-                {paginatedReadings.length > 0 ? (
-
-                    paginatedReadings.map((reading) => (
-
-                        <tr key={reading.id}>
-
-                            <td>
-                                {formatReadingDate(
-                                    reading.reading_date
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan="5" className="empty-history">
+                                            <div className="empty-history-content">
+                                                <span>◷</span>
+                                                <strong>No readings found</strong>
+                                                <p>
+                                                    Try another date or add a new reading.
+                                                </p>
+                                            </div>
+                                        </td>
+                                    </tr>
                                 )}
-                            </td>
 
-                            <td>
-                                {reading.time_slot}
-                            </td>
+                            </tbody>
 
-                            <td>
-                                <span className="glucose-value">
-                                    {reading.glucose_value} mg/dL
-                                </span>
-                            </td>
+                        </table>
 
-                            <td>
-                                <span className="record-status">
-                                    Recorded
-                                </span>
-                            </td>
+                    </div>
 
-                            <td>
-                                <div className="table-actions">
+                    {/* Pagination */}
+                    <div className="history-pagination">
 
-                                    <button
-                                        className="edit-btn"
-                                        onClick={() =>
-                                            handleEditReading(reading)
-                                        }
-                                    >
-                                        Edit
-                                    </button>
+                        <span className="pagination-info">
+                            Showing{" "}
+                            {filteredReadings.length === 0
+                                ? 0
+                                : indexOfFirstReading + 1}
+                            {" - "}
+                            {Math.min(indexOfLastReading, filteredReadings.length)}
+                            {" of "}
+                            {filteredReadings.length} readings
+                        </span>
 
-                                    <button
-                                        className="delete-btn"
-                                        onClick={() =>
-                                            handleDeleteReading(reading.id)
-                                        }
-                                    >
-                                        Delete
-                                    </button>
+                        <div className="pagination-controls">
 
-                                </div>
-                            </td>
+                            <button
+                                onClick={handlePreviousPage}
+                                disabled={currentPage === 1}
+                            >
+                                ← Previous
+                            </button>
 
-                        </tr>
+                            <span>
+                                {currentPage} / {totalPages}
+                            </span>
 
-                    ))
+                            <button
+                                onClick={handleNextPage}
+                                disabled={currentPage === totalPages}
+                            >
+                                Next →
+                            </button>
 
-                ) : (
+                        </div>
 
-                    <tr>
-                        <td colSpan="5" className="no-readings">
-                            No readings found for this date.
-                        </td>
-                    </tr>
+                    </div>
 
-                )}
-
-            </tbody>
-
-        </table>
-
-    </div>
-
-    {/* Pagination */}
-    <div className="pagination-container">
-
-        <div className="pagination-info">
-
-            Showing{" "}
-            {filteredReadings.length === 0
-                ? 0
-                : indexOfFirstReading + 1}
-            {" - "}
-            {Math.min(
-                indexOfLastReading,
-                filteredReadings.length
-            )}
-            {" of "}
-            {filteredReadings.length} readings
-
-        </div>
-
-        <div className="pagination-buttons">
-
-            <button
-                className="pagination-btn"
-                onClick={handlePreviousPage}
-                disabled={currentPage === 1}
-            >
-                ← Previous
-            </button>
-
-            <span className="page-number">
-                Page {currentPage} of {totalPages}
-            </span>
-
-            <button
-                className="pagination-btn"
-                onClick={handleNextPage}
-                disabled={currentPage === totalPages}
-            >
-                Next →
-            </button>
-
-        </div>
-
-    </div>
-
-</section>
+                </section>
 
             </main>
 
-            {/* Add / Edit Reading Modal */}
+            {/* Add / Edit Modal */}
             {showForm && (
 
-                <div
-                    style={{
-                        position: "fixed",
-                        inset: 0,
-                        background: "rgba(15, 23, 42, 0.55)",
-                        display: "flex",
-                        justifyContent: "center",
-                        alignItems: "center",
-                        zIndex: 2000,
-                        padding: "20px"
-                    }}
-                >
+                <div className="reading-modal-overlay">
 
-                    <div
-                        style={{
-                            background: "#ffffff",
-                            width: "100%",
-                            maxWidth: "450px",
-                            borderRadius: "16px",
-                            padding: "28px",
-                            boxShadow: "0 20px 60px rgba(0,0,0,0.15)"
-                        }}
-                    >
+                    <div className="reading-modal">
 
-                        <h2 style={{ marginBottom: "8px" }}>
-                            {editingId
-                                ? "Edit Glucose Reading"
-                                : "Add Glucose Reading"}
-                        </h2>
+                        <div className="modal-header">
 
-                        <p
-                            style={{
-                                color: "#64748b",
-                                marginBottom: "24px"
-                            }}
-                        >
-                            Enter your glucose reading details.
-                        </p>
+                            <div>
+                                <span className="section-eyebrow">
+                                    GLUCOSE TRACKER
+                                </span>
+
+                                <h2>
+                                    {editingId
+                                        ? "Edit Reading"
+                                        : "Add New Reading"}
+                                </h2>
+
+                                <p>
+                                    Enter your glucose measurement details.
+                                </p>
+                            </div>
+
+                            <button
+                                className="modal-close"
+                                type="button"
+                                onClick={handleCancel}
+                                disabled={saving}
+                            >
+                                ×
+                            </button>
+
+                        </div>
 
                         <form onSubmit={handleSubmit}>
 
-                            {/* Reading Date */}
-                            <div style={{ marginBottom: "18px" }}>
+                            <div className="form-group">
 
-                                <label
-                                    htmlFor="reading_date"
-                                    style={{
-                                        display: "block",
-                                        marginBottom: "8px",
-                                        fontWeight: "600"
-                                    }}
-                                >
+                                <label htmlFor="reading_date">
                                     Reading Date
                                 </label>
 
@@ -1034,28 +947,13 @@ const progressPercentage = (completedSlots / 4) * 100;
                                     onChange={handleInputChange}
                                     required
                                     max={getLocalDate()}
-                                    style={{
-                                        width: "100%",
-                                        padding: "12px",
-                                        border: "1px solid #cbd5e1",
-                                        borderRadius: "8px",
-                                        boxSizing: "border-box"
-                                    }}
                                 />
 
                             </div>
 
-                            {/* Time Slot */}
-                            <div style={{ marginBottom: "18px" }}>
+                            <div className="form-group">
 
-                                <label
-                                    htmlFor="time_slot"
-                                    style={{
-                                        display: "block",
-                                        marginBottom: "8px",
-                                        fontWeight: "600"
-                                    }}
-                                >
+                                <label htmlFor="time_slot">
                                     Time Slot
                                 </label>
 
@@ -1065,47 +963,20 @@ const progressPercentage = (completedSlots / 4) * 100;
                                     value={formData.time_slot}
                                     onChange={handleInputChange}
                                     required
-                                    style={{
-                                        width: "100%",
-                                        padding: "12px",
-                                        border: "1px solid #cbd5e1",
-                                        borderRadius: "8px",
-                                        boxSizing: "border-box"
-                                    }}
                                 >
-
-                                    <option value="Morning (fasting)">
-                                        Morning (fasting)
-                                    </option>
-
-                                    <option value="After breakfast">
-                                        After breakfast
-                                    </option>
-
-                                    <option value="After lunch">
-                                        After lunch
-                                    </option>
-
-                                    <option value="After dinner">
-                                        After dinner
-                                    </option>
-
+                                    {timeSlots.map((slot) => (
+                                        <option key={slot} value={slot}>
+                                            {slot}
+                                        </option>
+                                    ))}
                                 </select>
 
                             </div>
 
-                            {/* Glucose Value */}
-                            <div style={{ marginBottom: "24px" }}>
+                            <div className="form-group">
 
-                                <label
-                                    htmlFor="glucose_value"
-                                    style={{
-                                        display: "block",
-                                        marginBottom: "8px",
-                                        fontWeight: "600"
-                                    }}
-                                >
-                                    Glucose Value (mg/dL)
+                                <label htmlFor="glucose_value">
+                                    Glucose Value <span>(mg/dL)</span>
                                 </label>
 
                                 <input
@@ -1119,62 +990,35 @@ const progressPercentage = (completedSlots / 4) * 100;
                                     max="600"
                                     step="1"
                                     placeholder="Enter glucose value"
-                                    style={{
-                                        width: "100%",
-                                        padding: "12px",
-                                        border: "1px solid #cbd5e1",
-                                        borderRadius: "8px",
-                                        boxSizing: "border-box"
-                                    }}
                                 />
+
+                                <small className="input-hint">
+                                    Allowed range: 40–600 mg/dL
+                                </small>
 
                             </div>
 
-                            {/* Form Buttons */}
-                            <div
-                                style={{
-                                    display: "flex",
-                                    gap: "12px"
-                                }}
-                            >
+                            <div className="modal-actions">
+
+                                <button
+                                    type="button"
+                                    className="modal-cancel"
+                                    onClick={handleCancel}
+                                    disabled={saving}
+                                >
+                                    Cancel
+                                </button>
 
                                 <button
                                     type="submit"
+                                    className="modal-submit"
                                     disabled={saving}
-                                    style={{
-                                        flex: 1,
-                                        background: "#0f766e",
-                                        color: "#ffffff",
-                                        padding: "12px",
-                                        border: "none",
-                                        borderRadius: "8px",
-                                        cursor: saving ? "not-allowed" : "pointer",
-                                        fontWeight: "600"
-                                    }}
                                 >
                                     {saving
                                         ? "Saving..."
                                         : editingId
                                             ? "Update Reading"
                                             : "Save Reading"}
-                                </button>
-
-                                <button
-                                    type="button"
-                                    onClick={handleCancel}
-                                    disabled={saving}
-                                    style={{
-                                        flex: 1,
-                                        background: "#f1f5f9",
-                                        color: "#334155",
-                                        padding: "12px",
-                                        border: "none",
-                                        borderRadius: "8px",
-                                        cursor: "pointer",
-                                        fontWeight: "600"
-                                    }}
-                                >
-                                    Cancel
                                 </button>
 
                             </div>
