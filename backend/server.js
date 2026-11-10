@@ -6,6 +6,8 @@ const { connectDB } = require("./config/db");
 
 const authRoutes = require("./routes/authRoutes");
 
+const readingsRoutes = require("./routes/readingsRoutes");
+
 const protect = require("./middleware/authMiddleware");
 
 const app = express();
@@ -29,6 +31,8 @@ app.get("/api/protected", protect, (req, res) => {
 
 // Authentication routes
 app.use("/api/auth", authRoutes);
+
+app.use("/api/readings", readingsRoutes);
 
 const PORT = process.env.PORT || 5000;
 
