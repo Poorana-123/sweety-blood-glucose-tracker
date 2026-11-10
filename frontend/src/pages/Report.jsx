@@ -5,6 +5,10 @@ import {
     ResponsiveContainer,
     LineChart,
     Line,
+    AreaChart,
+    Area,
+    BarChart,
+    Bar,
     XAxis,
     YAxis,
     CartesianGrid,
@@ -512,92 +516,299 @@ function Report() {
 
                     </div>
 
-                    {/* Graph */}
-                    <div className="report-chart-card">
+                    
+{/* Graph */}
+<div className="report-chart-card">
 
-                        <div className="report-section-heading">
-                            <div>
-                                <h2>Glucose Level Trend</h2>
+    <div className="report-section-heading">
+        <div>
+            <h2>
+                {reportType === "date"
+                    ? "Daily Glucose Overview"
+                    : reportType === "month"
+                        ? "Monthly Glucose Overview"
+                        : "Previous Month Glucose Trend"}
+            </h2>
 
-                                <p>
-                                    Visual representation of your readings.
-                                </p>
-                            </div>
-                        </div>
+            <p>
+                {reportType === "date"
+                    ? "Track glucose changes throughout the day."
+                    : reportType === "month"
+                        ? "Compare daily average glucose values."
+                        : "Review your previous month's glucose patterns."}
+            </p>
+        </div>
 
-                        {reportData.length > 0 ? (
+        <span className="report-chart-badge">
+            {reportType === "date"
+                ? "Daily"
+                : reportType === "month"
+                    ? "Monthly"
+                    : "History"}
+        </span>
+    </div>
 
-                            <ResponsiveContainer
-                                width="100%"
-                                height={350}
-                            >
+    {reportData.length > 0 ? (
 
-                                <LineChart
-                                    data={reportData}
-                                    margin={{
-                                        top: 20,
-                                        right: 20,
-                                        left: 10,
-                                        bottom: 10
-                                    }}
-                                >
+        <ResponsiveContainer width="100%" height={350}>
 
-                                    <CartesianGrid
-                                        strokeDasharray="3 3"
-                                        stroke="#e2e8f0"
-                                    />
+            {reportType === "date" ? (
 
-                                    <XAxis
-                                        dataKey={
-                                            reportType === "date"
-                                                ? "timeSlot"
-                                                : "date"
-                                        }
-                                        tick={{ fontSize: 12 }}
-                                    />
+                /* DATE-WISE AREA CHART */
 
-                                    <YAxis
-                                        domain={["auto", "auto"]}
-                                        tick={{ fontSize: 12 }}
-                                        label={{
-                                            value: "Glucose (mg/dL)",
-                                            angle: -90,
-                                            position: "insideLeft"
-                                        }}
-                                    />
+                <AreaChart
+                    data={reportData}
+                    margin={{
+                        top: 20,
+                        right: 20,
+                        left: 10,
+                        bottom: 10
+                    }}
+                >
 
-                                    <Tooltip />
+                    <defs>
+                        <linearGradient
+                            id="glucoseAreaGradient"
+                            x1="0"
+                            y1="0"
+                            x2="0"
+                            y2="1"
+                        >
+                            <stop
+                                offset="0%"
+                                stopColor="#0d9488"
+                                stopOpacity={0.35}
+                            />
 
-                                    <Legend />
+                            <stop
+                                offset="95%"
+                                stopColor="#99f6e4"
+                                stopOpacity={0.03}
+                            />
+                        </linearGradient>
+                    </defs>
 
-                                    <Line
-                                        type="monotone"
-                                        dataKey="glucose"
-                                        name="Glucose (mg/dL)"
-                                        stroke="#0d9488"
-                                        strokeWidth={3}
-                                        dot={{
-                                            r: 5,
-                                            fill: "#0d9488"
-                                        }}
-                                        activeDot={{
-                                            r: 8
-                                        }}
-                                    />
+                    <CartesianGrid
+                        strokeDasharray="3 3"
+                        stroke="#e8eef3"
+                        vertical={false}
+                    />
 
-                                </LineChart>
+                    <XAxis
+                        dataKey="timeSlot"
+                        tick={{ fill: "#64748b", fontSize: 12 }}
+                        axisLine={false}
+                        tickLine={false}
+                    />
 
-                            </ResponsiveContainer>
+                    <YAxis
+                        domain={["auto", "auto"]}
+                        tick={{ fill: "#64748b", fontSize: 12 }}
+                        axisLine={false}
+                        tickLine={false}
+                    />
 
-                        ) : (
+                    <Tooltip
+                        contentStyle={{
+                            background: "#ffffff",
+                            border: "1px solid #e2e8f0",
+                            borderRadius: "14px",
+                            boxShadow: "0 8px 25px rgba(15,23,42,0.08)"
+                        }}
+                        formatter={(value) => [
+                            `${value} mg/dL`,
+                            "Glucose"
+                        ]}
+                    />
 
-                            <div className="report-empty">
-                                No readings available for this report.
-                            </div>
+                    <Area
+                        type="monotone"
+                        dataKey="glucose"
+                        stroke="#0d9488"
+                        strokeWidth={3}
+                        fill="url(#glucoseAreaGradient)"
+                        dot={{
+                            r: 5,
+                            fill: "#0d9488",
+                            stroke: "#ffffff",
+                            strokeWidth: 2
+                        }}
+                        activeDot={{
+                            r: 8,
+                            fill: "#0f766e",
+                            stroke: "#ffffff",
+                            strokeWidth: 3
+                        }}
+                        animationDuration={1000}
+                    />
 
-                        )}
+                </AreaChart>
 
-                    </div>
+            ) : reportType === "month" ? (
+
+                /* MONTH-WISE BAR CHART */
+
+                <BarChart
+                    data={reportData}
+                    margin={{
+                        top: 20,
+                        right: 20,
+                        left: 10,
+                        bottom: 10
+                    }}
+                >
+
+                    <defs>
+                        <linearGradient
+                            id="glucoseBarGradient"
+                            x1="0"
+                            y1="0"
+                            x2="0"
+                            y2="1"
+                        >
+                            <stop
+                                offset="0%"
+                                stopColor="#14b8a6"
+                            />
+
+                            <stop
+                                offset="100%"
+                                stopColor="#0f766e"
+                            />
+                        </linearGradient>
+                    </defs>
+
+                    <CartesianGrid
+                        strokeDasharray="3 3"
+                        stroke="#e8eef3"
+                        vertical={false}
+                    />
+
+                    <XAxis
+                        dataKey="date"
+                        tick={{ fill: "#64748b", fontSize: 11 }}
+                        axisLine={false}
+                        tickLine={false}
+                    />
+
+                    <YAxis
+                        domain={["auto", "auto"]}
+                        tick={{ fill: "#64748b", fontSize: 12 }}
+                        axisLine={false}
+                        tickLine={false}
+                    />
+
+                    <Tooltip
+                        cursor={{ fill: "#f0fdfa" }}
+                        contentStyle={{
+                            background: "#ffffff",
+                            border: "1px solid #e2e8f0",
+                            borderRadius: "14px",
+                            boxShadow: "0 8px 25px rgba(15,23,42,0.08)"
+                        }}
+                        formatter={(value) => [
+                            `${value} mg/dL`,
+                            "Daily Average"
+                        ]}
+                    />
+
+                    <Bar
+                        dataKey="average"
+                        name="Daily Average"
+                        fill="url(#glucoseBarGradient)"
+                        radius={[8, 8, 0, 0]}
+                        maxBarSize={45}
+                        animationDuration={1000}
+                    />
+
+                </BarChart>
+
+            ) : (
+
+                /* PREVIOUS MONTH LINE CHART */
+
+                <LineChart
+                    data={reportData}
+                    margin={{
+                        top: 20,
+                        right: 20,
+                        left: 10,
+                        bottom: 10
+                    }}
+                >
+
+                    <CartesianGrid
+                        strokeDasharray="3 3"
+                        stroke="#e8eef3"
+                        vertical={false}
+                    />
+
+                    <XAxis
+                        dataKey="date"
+                        tick={{ fill: "#64748b", fontSize: 11 }}
+                        axisLine={false}
+                        tickLine={false}
+                    />
+
+                    <YAxis
+                        domain={["auto", "auto"]}
+                        tick={{ fill: "#64748b", fontSize: 12 }}
+                        axisLine={false}
+                        tickLine={false}
+                    />
+
+                    <Tooltip
+                        contentStyle={{
+                            background: "#ffffff",
+                            border: "1px solid #e2e8f0",
+                            borderRadius: "14px",
+                            boxShadow: "0 8px 25px rgba(15,23,42,0.08)"
+                        }}
+                        formatter={(value) => [
+                            `${value} mg/dL`,
+                            "Daily Average"
+                        ]}
+                    />
+
+                    <Legend />
+
+                    <Line
+                        type="monotone"
+                        dataKey="average"
+                        name="Daily Average"
+                        stroke="#6366f1"
+                        strokeWidth={3}
+                        dot={{
+                            r: 4,
+                            fill: "#6366f1",
+                            stroke: "#ffffff",
+                            strokeWidth: 2
+                        }}
+                        activeDot={{
+                            r: 8,
+                            fill: "#4f46e5",
+                            stroke: "#ffffff",
+                            strokeWidth: 3
+                        }}
+                        animationDuration={1000}
+                    />
+
+                </LineChart>
+
+            )}
+
+        </ResponsiveContainer>
+
+    ) : (
+
+        <div className="report-empty">
+            No readings available for this report.
+        </div>
+
+    )}
+
+</div>
+
 
                     {/* Report Table */}
                     <div className="report-table-card">
