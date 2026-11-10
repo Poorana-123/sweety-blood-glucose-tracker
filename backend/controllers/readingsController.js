@@ -74,4 +74,109 @@ const getReadings = async (req, res) => {
 };
 
 
-module.exports = { addReading, getReadings };
+// Update glucose reading
+const updateReading = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { reading_date, time_slot, glucose_value } = req.body;
+
+        if (!reading_date || !time_slot || glucose_value === undefined) {
+            return res.status(400).json({
+                message: "All fields are required"
+            });
+        }
+
+        if (
+            !Number.isInteger(Number(glucose_value)) ||
+            Number(glucose_value) < 40 ||
+            Number(glucose_value) > 600
+        ) {
+            return res.status(400).json({
+                message: "Glucose value must be an integer between 40 and 600"
+            });
+        }
+
+        const result = await pool.query(
+            `UPDATE readings
+             SET reading_date = $1,
+                 time_slot = $2,
+                 glucose_value = $3
+             WHERE id = $4 AND user_id = $5
+             RETURNING *`,
+            [
+                reading_date,
+                time_slot,
+                glucose_value,
+                id,
+                req.user.id
+            ]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({
+                message: "Reading not found"
+            });
+        }
+
+        res.status(200).json({
+            message: "Glucose reading updated successfully",
+            reading: result.rows[0]
+        });
+
+    } catch (error) {
+        console.error("Update reading error:", error);
+
+        if (error.code === "23505") {
+            return res.status(409).json({
+                message: "A reading already exists for this date and time slot"
+            });
+        }
+
+        res.status(500).json({
+            message: "Server error while updating reading"
+        });
+    }
+};
+
+
+// Delete glucose reading
+const deleteReading = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const result = await pool.query(
+            `DELETE FROM readings
+             WHERE id = $1 AND user_id = $2
+             RETURNING *`,
+            [id, req.user.id]
+        );
+
+        // Check whether the reading exists
+        if (result.rows.length === 0) {
+            return res.status(404).json({
+                message: "Reading not found"
+            });
+        }
+
+        res.status(200).json({
+            message: "Glucose reading deleted successfully",
+            reading: result.rows[0]
+        });
+
+    } catch (error) {
+        console.error("Delete reading error:", error);
+
+        res.status(500).json({
+            message: "Server error while deleting reading"
+        });
+    }
+};
+
+module.exports = {
+    addReading,
+    getReadings,
+    updateReading,
+    deleteReading
+};
+
+
