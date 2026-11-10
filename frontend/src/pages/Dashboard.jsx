@@ -419,6 +419,12 @@ const progressPercentage = (completedSlots / 4) * 100;
                         Welcome, {user?.name || "User"}
                     </span>
 
+                    <button
+                        className="reports-navigation-btn"
+                        onClick={() => navigate("/reports")}>
+                        📊 View Reports
+                    </button>
+
                     <button onClick={handleLogout}>
                         Logout
                     </button>
