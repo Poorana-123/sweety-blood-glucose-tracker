@@ -7,7 +7,7 @@
 body {
     font-family: Arial, sans-serif;
     background: #f0f7f6;
-    color: #183b3b;
+    color: #66516d;
 }
 
 .auth-container {
@@ -30,7 +30,7 @@ body {
 
 .auth-card h1 {
     text-align: center;
-    color: #159a8c;
+    color: #66516d;
     font-size: 32px;
     margin-bottom: 10px;
 }
@@ -63,7 +63,7 @@ body {
 }
 
 .auth-card input:focus {
-    border-color: #159a8c;
+    border-color: #66516d;
     box-shadow: 0 0 0 3px rgba(21, 154, 140, 0.1);
 }
 
@@ -71,7 +71,7 @@ body {
     padding: 14px;
     border: none;
     border-radius: 8px;
-    background: #159a8c;
+    background: #66516d;
     color: white;
     font-size: 16px;
     font-weight: bold;
@@ -80,7 +80,7 @@ body {
 }
 
 .auth-card button:hover {
-    background: #117c72;
+    background: #66516d;
     transform: translateY(-2px);
 }
 
@@ -91,7 +91,7 @@ body {
 }
 
 .auth-link a {
-    color: #159a8c;
+    color: #66516d;
     text-decoration: none;
     font-weight: bold;
 }

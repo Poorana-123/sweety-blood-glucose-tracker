@@ -9,6 +9,7 @@ function Dashboard() {
 
     const [user, setUser] = useState(null);
     const [readings, setReadings] = useState([]);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
 
     const [dailyReport, setDailyReport] = useState(null);
     const [mtdReport, setMtdReport] = useState(null);
@@ -142,19 +143,26 @@ function Dashboard() {
     };
 
     // Add reading
-    const handleAddReading = (timeSlot = "Morning (fasting)") => {
-        setEditingId(null);
+const handleAddReading = (timeSlot = "Morning (fasting)") => {
+    // Prevent a React event from being stored as time_slot
+    const selectedTimeSlot =
+        typeof timeSlot === "string" &&
+        timeSlots.includes(timeSlot)
+            ? timeSlot
+            : "Morning (fasting)";
 
-        setFormData({
-            ...initialFormData,
-            reading_date: getLocalDate(),
-            time_slot: timeSlot
-        });
+    setEditingId(null);
 
-        setError("");
-        setSuccess("");
-        setShowForm(true);
-    };
+    setFormData({
+        reading_date: getLocalDate(),
+        time_slot: selectedTimeSlot,
+        glucose_value: ""
+    });
+
+    setError("");
+    setSuccess("");
+    setShowForm(true);
+};
 
     // Edit reading
     const handleEditReading = (reading) => {
@@ -182,47 +190,59 @@ function Dashboard() {
     };
 
     // Create / Update
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+   const handleSubmit = async (e) => {
+    e.preventDefault();
 
-        try {
-            setSaving(true);
-            setError("");
-            setSuccess("");
+    console.log("Submit event:", e);
+    console.log("Form data:", formData);
 
-            const payload = {
-                reading_date: formData.reading_date,
-                time_slot: formData.time_slot,
-                glucose_value: Number(formData.glucose_value)
-            };
-
-            if (editingId) {
-                await API.put(`/readings/${editingId}`, payload);
-
-                setSuccess("Reading updated successfully!");
-            } else {
-                await API.post("/readings", payload);
-
-                setSuccess("Reading added successfully!");
-            }
-
-            setShowForm(false);
-            setEditingId(null);
-            setFormData(initialFormData);
-
-            await fetchDashboardData(false);
-
-        } catch (err) {
-            console.error("Save reading error:", err);
-
-            setError(
-                err.response?.data?.message ||
-                "Unable to save reading. Please try again."
-            );
-        } finally {
-            setSaving(false);
-        }
+    const payload = {
+        reading_date: formData.reading_date,
+        time_slot: formData.time_slot,
+        glucose_value: Number(formData.glucose_value)
     };
+
+    console.log("Payload:", payload);
+    console.log("Payload JSON:", JSON.stringify(payload));
+
+    try {
+        setSaving(true);
+        setError("");
+        setSuccess("");
+
+        if (editingId) {
+            console.log("Updating reading:", editingId);
+
+            await API.put(`/readings/${editingId}`, payload);
+
+            setSuccess("Reading updated successfully!");
+        } else {
+            console.log("Adding reading");
+
+            await API.post("/readings", payload);
+
+            setSuccess("Reading added successfully!");
+        }
+
+        setShowForm(false);
+        setEditingId(null);
+        setFormData(initialFormData);
+
+        await fetchDashboardData(false);
+
+    } catch (err) {
+        console.error("Save reading error:", err);
+
+        console.error("Error response:", err.response?.data);
+
+        setError(
+            err.response?.data?.message ||
+            "Unable to save reading. Please try again."
+        );
+    } finally {
+        setSaving(false);
+    }
+};
 
     // Delete
     const handleDeleteReading = async (id) => {
@@ -362,7 +382,7 @@ function Dashboard() {
         <div className="dashboard-container">
 
             {/* Sidebar */}
-            <aside className="dashboard-sidebar">
+            <aside className={`dashboard-sidebar ${sidebarOpen ? "sidebar-open" : ""}`}>
 
                 <div className="sidebar-brand">
                     <div className="brand-icon">♥</div>
@@ -410,6 +430,15 @@ function Dashboard() {
 
             {/* Main Content */}
             <main className="dashboard-main">
+
+                <button
+    type="button"
+    className="mobile-sidebar-toggle"
+    onClick={() => setSidebarOpen((prev) => !prev)}
+    aria-label={sidebarOpen ? "Close sidebar" : "Open sidebar"}
+>
+    {sidebarOpen ? "✕" : "☰"}
+</button>
 
                 {/* Topbar */}
                 <header className="dashboard-topbar">
@@ -459,11 +488,12 @@ function Dashboard() {
                         </div>
 
                         <button
-                            className="add-reading-button"
-                            onClick={handleAddReading}
-                        >
-                            + Add Reading
-                        </button>
+    type="button"
+    className="add-reading-button"
+    onClick={() => handleAddReading("Morning (fasting)")}
+>
+    + Add Reading
+</button>
 
                     </div>
 
